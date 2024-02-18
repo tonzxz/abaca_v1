@@ -20,6 +20,12 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Image.asset(
+                "assets/images/abacalogo.png",
+                width: 250,
+                height: 250,
+              ),
+              const SizedBox(height: sizedBoxLG),
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -30,7 +36,7 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(
                         fontSize: textMD,
                         fontWeight: fontLG,
-                        color: text2Color,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -46,7 +52,7 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(
                         fontSize: textLG,
                         fontWeight: fontXL,
-                        color: text2Color,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -55,22 +61,15 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: sizedBoxLG),
               const SizedBox(height: sizedBoxLG),
               const SizedBox(height: sizedBoxLG),
-              Image.asset(
-                "assets/images/abacalogo.png",
-                width: 250,
-                height: 250,
-              ),
-              const SizedBox(height: sizedBoxLG),
-              const SizedBox(height: sizedBoxLG),
               const SizedBox(height: sizedBoxLG),
               MyButton(
                 onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const MyChoices(),
-                          ),
-                        );
-                      },
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MyChoices(),
+                    ),
+                  );
+                },
                 text: 'Get Started',
               ),
             ],
