@@ -16,8 +16,7 @@ class GradientButtonFb1 extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        gradient:
-            const LinearGradient(colors: [gradient1Color, gradient2Color]),
+        gradient: const LinearGradient(colors: [Colors.white, Colors.white]),
       ),
       child: ElevatedButton(
         style: ButtonStyle(
@@ -35,7 +34,7 @@ class GradientButtonFb1 extends StatelessWidget {
         child: Text(
           text,
           style: const TextStyle(
-              color: text1Color, fontWeight: fontSM, fontSize: textSM),
+              color: text2Color, fontWeight: fontSM, fontSize: textSM),
         ),
       ),
     );

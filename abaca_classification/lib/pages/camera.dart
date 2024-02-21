@@ -17,7 +17,7 @@ class _MyCameraState extends State<MyCamera> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
 
-  final List<String> buttonLabels = [
+  final List<String> abacaGrades = [
     'ef',
     's2',
     's3',
@@ -94,66 +94,90 @@ class _MyCameraState extends State<MyCamera> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-        child: Center(
-          child: Stack(
-            children: [
-              if (_controller != null)
-                FutureBuilder<void>(
-                  future: _initializeControllerFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(0.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(0.0),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              gradient1Color,
+              gradient2Color,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
+          child: Center(
+            child: Stack(
+              children: [
+                if (_controller != null)
+                  FutureBuilder<void>(
+                    future: _initializeControllerFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(0.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(0.0),
+                            ),
+                            child: CameraPreview(_controller!),
                           ),
-                          child: CameraPreview(_controller!),
-                        ),
-                      );
-                    } else {
-                      return const CircularProgressIndicator();
-                    }
-                  },
-                ),
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: buttonLabels
-                      .map(
-                        (label) => ElevatedButton(
-                          onPressed: () {
-                            // Add your button onPressed logic here
-                            print('Button $label pressed');
-                          },
-                          child: Text(label),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: ClipOval(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await _takePicture(context); // Pass context here
+                        );
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mainColor, // Button color
-                      padding: const EdgeInsets.all(16), // Example padding
-                    ),
-                    child: const Icon(Icons.camera_alt),
+                  ),
+                Positioned(
+                  left: 0,
+                  top: 160,
+                  bottom: 240,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: abacaGrades
+                        .map(
+                          (label) => ElevatedButton(
+                            onPressed: () {
+                              print('Button $label pressed');
+                            },
+                            child: Text(label),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 15),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            Colors.white, // Yellow color for the circular shape
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await _takePicture(context); // Pass context here
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.yellow, // Make button transparent
+                          padding: EdgeInsets.zero, // Remove padding
+                          shape: const CircleBorder(), // Make button circeular
+                        ),
+                        child: const SizedBox(
+                          width: 50, // Width of the circular shape
+                          height: 50,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -170,10 +194,25 @@ class DisplayPictureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 55, 10, 20),
-        child: Center(
-          child: Image.file(File(imagePath)),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              gradient1Color,
+              gradient2Color,
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 55, 10, 20),
+          child: Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20), // Example border radius
+              child: Image.file(File(imagePath)),
+            ),
+          ),
         ),
       ),
     );
