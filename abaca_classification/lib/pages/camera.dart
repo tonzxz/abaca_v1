@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:path/path.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:abaca_classification/theme/styles.dart';
+// import 'package:path/path.dart';
+// ignore: depend_on_referenced_packages
 
 class MyCamera extends StatefulWidget {
   const MyCamera({Key? key}) : super(key: key);
@@ -18,14 +19,14 @@ class _MyCameraState extends State<MyCamera> {
   Future<void>? _initializeControllerFuture;
 
   final List<String> abacaGrades = [
-    'ef',
-    's2',
-    's3',
-    'i',
-    'g',
-    'h',
-    'jk',
-    'm1',
+    'EF',
+    'S2',
+    'S3',
+    'I',
+    'G',
+    'H',
+    'JK',
+    'M1',
   ];
 
   @override
@@ -94,92 +95,268 @@ class _MyCameraState extends State<MyCamera> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.center,
-            colors: [
-              gradient1Color,
-              gradient2Color,
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
-          child: Center(
-            child: Stack(
-              children: [
-                if (_controller != null)
-                  FutureBuilder<void>(
-                    future: _initializeControllerFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(0.0),
-                          child: Container(
-                            decoration: BoxDecoration(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.center,
+                colors: [
+                  gradient1Color,
+                  gradient2Color,
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
+              child: Center(
+                child: Stack(
+                  children: [
+                    if (_controller != null)
+                      FutureBuilder<void>(
+                        future: _initializeControllerFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.done) {
+                            return ClipRRect(
                               borderRadius: BorderRadius.circular(0.0),
-                            ),
-                            child: CameraPreview(_controller!),
-                          ),
-                        );
-                      } else {
-                        return const CircularProgressIndicator();
-                      }
-                    },
-                  ),
-                Positioned(
-                  left: 0,
-                  top: 160,
-                  bottom: 240,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: abacaGrades
-                        .map(
-                          (label) => ElevatedButton(
-                            onPressed: () {
-                              print('Button $label pressed');
-                            },
-                            child: Text(label),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 15),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color:
-                            Colors.white, // Yellow color for the circular shape
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          await _takePicture(context); // Pass context here
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(0.0),
+                                ),
+                                child: CameraPreview(_controller!),
+                              ),
+                            );
+                          } else {
+                            return const CircularProgressIndicator();
+                          }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.yellow, // Make button transparent
-                          padding: EdgeInsets.zero, // Remove padding
-                          shape: const CircleBorder(), // Make button circeular
-                        ),
-                        child: const SizedBox(
-                          width: 50, // Width of the circular shape
-                          height: 50,
+                      ),
+                    Positioned(
+                      left: 10,
+                      top: 160,
+                      bottom: 240,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: abacaGrades
+                            .map(
+                              (label) => SizedBox(
+                                width: 45.0,
+                                height: 45.0,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    print('Button $label pressed');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(200.0),
+                                    ),
+                                    padding: const EdgeInsets.all(
+                                        0), // Remove default padding
+                                  ),
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          gradient1Color,
+                                          gradient2Color
+                                        ], // Replace with your gradient colors
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.center,
+                                      ),
+                                      borderRadius: BorderRadius.circular(80.0),
+                                    ),
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                          minWidth: 20.0, minHeight: 20.0),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        label,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 15),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors
+                                .white, // Yellow color for the circular shape
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              await _takePicture(context); // Pass context here
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.yellow, // Make button transparent
+                              padding: EdgeInsets.zero, // Remove padding
+                              shape:
+                                  const CircleBorder(), // Make button circeular
+                            ),
+                            child: const SizedBox(
+                              width: 50, // Width of the circular shape
+                              height: 50,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          Positioned(
+            top: 55,
+            left: 10,
+            child: SizedBox(
+              width: 45.0,
+              height: 45.0,
+              child: ElevatedButton(
+                onPressed: () {
+                  print('Button back pressed');
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(200.0),
+                  ),
+                  padding: const EdgeInsets.all(0), // Remove default padding
+                ),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        gradient1Color,
+                        gradient2Color
+                      ], // Replace with your gradient colors
+                      begin: Alignment.topCenter,
+                      end: Alignment.center,
+                    ),
+                    borderRadius: BorderRadius.circular(80.0),
+                  ),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 20.0, minHeight: 20.0),
+                    alignment: Alignment.center,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () {
+                        // Add your back button functionality here
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 55,
+            right: 10,
+            child: SizedBox(
+              width: 45.0,
+              height: 45.0,
+              child: ElevatedButton(
+                onPressed: () {
+                  print('Button back pressed');
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(200.0),
+                  ),
+                  padding: const EdgeInsets.all(0), // Remove default padding
+                ),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        gradient1Color,
+                        gradient2Color
+                      ], // Replace with your gradient colors
+                      begin: Alignment.topCenter,
+                      end: Alignment.center,
+                    ),
+                    borderRadius: BorderRadius.circular(80.0),
+                  ),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 20.0, minHeight: 20.0),
+                    alignment: Alignment.center,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.circle_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        // Add your back button functionality here
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 55,
+            right: 70,
+            child: SizedBox(
+              width: 45.0,
+              height: 45.0,
+              child: ElevatedButton(
+                onPressed: () {
+                  print('Button back pressed');
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(200.0),
+                  ),
+                  padding: const EdgeInsets.all(0), // Remove default padding
+                ),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        gradient1Color,
+                        gradient2Color
+                      ], // Replace with your gradient colors
+                      begin: Alignment.topCenter,
+                      end: Alignment.center,
+                    ),
+                    borderRadius: BorderRadius.circular(80.0),
+                  ),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 20.0, minHeight: 20.0),
+                    alignment: Alignment.center,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.print,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        // Add your back button functionality here
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

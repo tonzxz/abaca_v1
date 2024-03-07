@@ -42,7 +42,7 @@ class _MyChoicesState extends State<MyChoices> {
                       ),
                     );
                   },
-                  icon: Icons.camera,
+                  icon: Icons.camera_alt_rounded,
                 ),
                 const SizedBox(height: sizedBoxLG),
                 MyIconButton(
