@@ -10,9 +10,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:abaca_classification/theme/styles.dart';
 
-// import 'package:path/path.dart';
-// ignore: depend_on_referenced_packages
-
 class MyCamera extends StatefulWidget {
   const MyCamera({Key? key}) : super(key: key);
 
@@ -34,20 +31,9 @@ class _MyCameraState extends State<MyCamera> {
 
   void handleClick(int index) {
     setState(() {
-      activeIndex = index; // Set the clicked button as active
+      activeIndex = index;
     });
   }
-
-  // final List<String> abacaGrades = [
-  //   'EF',
-  //   'S2',
-  //   'S3',
-  //   'I',
-  //   'G',
-  //   'H',
-  //   'JK',
-  //   'M1',
-  // ];
 
   List<String> abacaGrades = [];
 
@@ -60,14 +46,9 @@ class _MyCameraState extends State<MyCamera> {
   }
 
   Future<void> loadAbacaGrades() async {
-    // Read the file containing the grades
     String content = await rootBundle.loadString('assets/model/label.txt');
-
-    // Split the content by newline character to get individual grades
     List<String> grades = content.split('\n');
-
     setState(() {
-      // Update the state with the read grades
       abacaGrades = grades;
     });
   }
@@ -75,7 +56,6 @@ class _MyCameraState extends State<MyCamera> {
   void _initCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
-
     _controller = CameraController(
       firstCamera,
       ResolutionPreset.high,
@@ -99,12 +79,6 @@ class _MyCameraState extends State<MyCamera> {
     closerModel();
   }
 
-  Future<void> checkActiveStatus(File file) async {
-    List<String> labels = await _classifyImage(file);
-    isActive = labels.isNotEmpty && abacaGrades.contains(labels[0]);
-    setState(() {}); // This will rebuild the UI
-  }
-
   Future loadModel() async {
     await Tflite.loadModel(
         model: "assets/model/model.tflite",
@@ -116,41 +90,6 @@ class _MyCameraState extends State<MyCamera> {
             false // defaults to false, set to true to use GPU delegate
         );
   }
-
-  // Future<void> _takePicture(BuildContext context) async {
-  //   if (_controller == null || !_controller!.value.isInitialized) {
-  //     print('Error: select a camera first.');
-  //     return;
-  //   }
-  //   if (_controller!.value.isTakingPicture) {
-  //     return;
-  //   }
-  //   try {
-  //     final image = await _controller!.takePicture();
-
-  //     final documentsDirectory = await getApplicationDocumentsDirectory();
-  //     final takenDirectory = Directory('${documentsDirectory.path}/taken');
-  //     if (!await takenDirectory.exists()) {
-  //       await takenDirectory.create(recursive: true);
-  //     }
-
-  //     final imagePath =
-  //         '${takenDirectory.path}/${DateTime.now().millisecondsSinceEpoch}.png';
-  //     await image.saveTo(imagePath);
-
-  //     // Navigate to the DisplayPictureScreen with the imagePath
-  //     Future.delayed(Duration.zero, () {
-  //       Navigator.push(
-  //         context as BuildContext,
-  //         MaterialPageRoute(
-  //           builder: (context) => DisplayPictureScreen(imagePath: imagePath),
-  //         ),
-  //       );
-  //     });
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
 
   Future<void> _takePicture(BuildContext context) async {
     if (_controller == null || !_controller!.value.isInitialized) {
@@ -173,7 +112,6 @@ class _MyCameraState extends State<MyCamera> {
           '${takenDirectory.path}/${DateTime.now().millisecondsSinceEpoch}.png';
       await File(image!.path).copy(imagePath);
 
-      // Call _classifyImage with the taken image
       var prediction = await _classifyImage(File(imagePath));
 
       setState(() {
@@ -181,15 +119,6 @@ class _MyCameraState extends State<MyCamera> {
         _image = File(imagePath);
       });
 
-      // Future.delayed(Duration.zero, () {
-      //   Navigator.push(
-      //     context as BuildContext,
-      //     MaterialPageRoute(
-      //       builder: (context) => DisplayPictureScreen(imagePath: imagePath),
-      //     ),
-      //   );
-      // });
-      // Show snackbar for success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$_recognition'),
@@ -208,26 +137,23 @@ class _MyCameraState extends State<MyCamera> {
     return File(croppedImage.path);
   }
 
-  Future<List<String>> _classifyImage(File file) async {
+  Future _classifyImage(File file) async {
     List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
-    // image = img.copyRotate(image!, -90);
+
     image = img.flipVertical(image!);
-    // resize image
+
     var reduced = img.copyResize(image,
         width: IMAGE_SIZE[0],
         height: IMAGE_SIZE[1],
-        interpolation: img.Interpolation.nearest); // resiize]
+        interpolation: img.Interpolation.nearest);
 
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
-    // final preprocessed = File('out/thumbnail-test.png')
-    //       ..writeAsBytesSync(img.encodePng(reduced));
+
     var recognitions = await Tflite.runModelOnImage(
         path: preprocessed.path, // required
-        //imageMean: 0.0,   // defaults to 117.0
-        //imageStd: 255.0,  // defaults to 1.0
         numResults: 1, // defaults to 5
         threshold: 0.2, // defaults to 0.1
         asynch: true // defaults to true
@@ -342,23 +268,20 @@ class _MyCameraState extends State<MyCamera> {
                         child: Container(
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors
-                                .white, // Yellow color for the circular shape
+                            color: Colors.white,
                           ),
                           padding: const EdgeInsets.all(4),
                           child: ElevatedButton(
                             onPressed: () async {
-                              await _takePicture(context); // Pass context here
+                              await _takePicture(context);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.yellow, // Make button transparent
-                              padding: EdgeInsets.zero, // Remove padding
-                              shape:
-                                  const CircleBorder(), // Make button circeular
+                              backgroundColor: Colors.yellow,
+                              padding: EdgeInsets.zero,
+                              shape: const CircleBorder(),
                             ),
                             child: const SizedBox(
-                              width: 50, // Width of the circular shape
+                              width: 50,
                               height: 50,
                             ),
                           ),
@@ -384,15 +307,12 @@ class _MyCameraState extends State<MyCamera> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(200.0),
                   ),
-                  padding: const EdgeInsets.all(0), // Remove default padding
+                  padding: const EdgeInsets.all(0),
                 ),
                 child: Ink(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        gradient1Color,
-                        gradient2Color
-                      ], // Replace with your gradient colors
+                      colors: [gradient1Color, gradient2Color],
                       begin: Alignment.topCenter,
                       end: Alignment.center,
                     ),
@@ -404,9 +324,7 @@ class _MyCameraState extends State<MyCamera> {
                     alignment: Alignment.center,
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () {
-                        // Add your back button functionality here
-                      },
+                      onPressed: () {},
                     ),
                   ),
                 ),
@@ -427,15 +345,12 @@ class _MyCameraState extends State<MyCamera> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(200.0),
                   ),
-                  padding: const EdgeInsets.all(0), // Remove default padding
+                  padding: const EdgeInsets.all(0),
                 ),
                 child: Ink(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        gradient1Color,
-                        gradient2Color
-                      ], // Replace with your gradient colors
+                      colors: [gradient1Color, gradient2Color],
                       begin: Alignment.topCenter,
                       end: Alignment.center,
                     ),
@@ -450,9 +365,7 @@ class _MyCameraState extends State<MyCamera> {
                         Icons.circle_outlined,
                         color: Colors.white,
                       ),
-                      onPressed: () {
-                        // Add your back button functionality here
-                      },
+                      onPressed: () {},
                     ),
                   ),
                 ),
@@ -473,15 +386,12 @@ class _MyCameraState extends State<MyCamera> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(200.0),
                   ),
-                  padding: const EdgeInsets.all(0), // Remove default padding
+                  padding: const EdgeInsets.all(0),
                 ),
                 child: Ink(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        gradient1Color,
-                        gradient2Color
-                      ], // Replace with your gradient colors
+                      colors: [gradient1Color, gradient2Color],
                       begin: Alignment.topCenter,
                       end: Alignment.center,
                     ),
@@ -496,9 +406,7 @@ class _MyCameraState extends State<MyCamera> {
                         Icons.print,
                         color: Colors.white,
                       ),
-                      onPressed: () {
-                        // Add your back button functionality here
-                      },
+                      onPressed: () {},
                     ),
                   ),
                 ),
@@ -506,39 +414,6 @@ class _MyCameraState extends State<MyCamera> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class DisplayPictureScreen extends StatelessWidget {
-  final String imagePath;
-
-  const DisplayPictureScreen({super.key, required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.center,
-            colors: [
-              gradient1Color,
-              gradient2Color,
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 55, 10, 20),
-          child: Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20), // Example border radius
-              child: Image.file(File(imagePath)),
-            ),
-          ),
-        ),
       ),
     );
   }
