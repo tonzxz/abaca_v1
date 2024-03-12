@@ -21,6 +21,8 @@ class _MyCameraState extends State<MyCamera> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
 
+  bool _continuousCapture = false;
+  Timer? _timer;
   var _recognition = [];
   File? _image;
   String _filename = '';
@@ -76,6 +78,7 @@ class _MyCameraState extends State<MyCamera> {
   void dispose() {
     _controller?.dispose();
     super.dispose();
+    _timer?.cancel();
     closerModel();
   }
 
@@ -90,6 +93,45 @@ class _MyCameraState extends State<MyCamera> {
             false // defaults to false, set to true to use GPU delegate
         );
   }
+
+  // Future<void> _takePicture(BuildContext context) async {
+  //   if (_controller == null || !_controller!.value.isInitialized) {
+  //     print('Error: select a camera first.');
+  //     return;
+  //   }
+  //   if (_controller!.value.isTakingPicture) {
+  //     return;
+  //   }
+  //   try {
+  //     final XFile? image = await _controller!.takePicture();
+
+  //     final documentsDirectory = await getApplicationDocumentsDirectory();
+  //     final takenDirectory = Directory('${documentsDirectory.path}/taken');
+  //     if (!await takenDirectory.exists()) {
+  //       await takenDirectory.create(recursive: true);
+  //     }
+
+  //     final imagePath =
+  //         '${takenDirectory.path}/${DateTime.now().millisecondsSinceEpoch}.png';
+  //     await File(image!.path).copy(imagePath);
+
+  //     var prediction = await _classifyImage(File(imagePath));
+
+  //     setState(() {
+  //       _recognition = prediction;
+  //       _image = File(imagePath);
+  //     });
+
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('$_recognition'),
+  //         duration: Duration(seconds: 2),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     print(e);
+  //   }
+  // }
 
   Future<void> _takePicture(BuildContext context) async {
     if (_controller == null || !_controller!.value.isInitialized) {
@@ -122,7 +164,7 @@ class _MyCameraState extends State<MyCamera> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$_recognition'),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 0),
         ),
       );
     } catch (e) {
@@ -273,10 +315,22 @@ class _MyCameraState extends State<MyCamera> {
                           padding: const EdgeInsets.all(4),
                           child: ElevatedButton(
                             onPressed: () async {
-                              await _takePicture(context);
+                              setState(() {
+                                _continuousCapture = !_continuousCapture;
+                              });
+                              if (_continuousCapture) {
+                                _timer = Timer.periodic(
+                                    const Duration(seconds: 2), (timer) {
+                                  _takePicture(context);
+                                });
+                              } else {
+                                _timer?.cancel();
+                              }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.yellow,
+                              backgroundColor: _continuousCapture
+                                  ? Colors.red
+                                  : Colors.yellow,
                               padding: EdgeInsets.zero,
                               shape: const CircleBorder(),
                             ),
