@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:abaca_classification/pages/camera.dart';
 import 'package:abaca_classification/theme/styles.dart';
-import 'package:abaca_classification/pages/landingpage.dart';
-import 'package:abaca_classification/components/iconbutton.dart';
+import 'package:abaca_classification/components/button.dart';
 
-class MyChoices extends StatefulWidget {
-  const MyChoices({Key? key}) : super(key: key);
+class MyLandingPage extends StatefulWidget {
+  const MyLandingPage({super.key});
 
   @override
-  State<MyChoices> createState() => _MyChoicesState();
+  State<MyLandingPage> createState() => _MyLandingPageState();
 }
 
-class _MyChoicesState extends State<MyChoices> {
+class _MyLandingPageState extends State<MyLandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +34,7 @@ class _MyChoicesState extends State<MyChoices> {
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                 ),
-                MyIconButton(
+                MyButton(
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -43,23 +42,7 @@ class _MyChoicesState extends State<MyChoices> {
                       ),
                     );
                   },
-                  icon: Icons.camera_alt_rounded,
-                ),
-                const SizedBox(height: sizedBoxLG),
-                MyIconButton(
-                  onPressed: () {},
-                  icon: Icons.print,
-                ),
-                const SizedBox(height: sizedBoxLG),
-                MyIconButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const MyLandingPage(),
-                      ),
-                    );
-                  },
-                  icon: Icons.info,
+                  text: 'Get Started',
                 ),
               ],
             ),
