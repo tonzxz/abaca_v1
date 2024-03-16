@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "389746513618",
+    "project_id": "abaca-thesis",
+    "storage_bucket": "abaca-thesis.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:389746513618:android:e53e8bbe531b8829b5ff0b",
+        "android_client_info": {
+          "package_name": "com.example.abaca_classification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3CBNdV2qNkvKS2JJGYvlZLM6sJK1qJDU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
