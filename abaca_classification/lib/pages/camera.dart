@@ -237,13 +237,13 @@ class _MyCameraState extends State<MyCamera> {
                 begin: Alignment.topCenter,
                 end: Alignment.center,
                 colors: [
-                  gradient1Color,
-                  gradient2Color,
+                  Colors.black,
+                  Colors.black,
                 ],
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 40, 0, 0),
+              padding: const EdgeInsets.fromLTRB(0, 85, 0, 0),
               child: Center(
                 child: Stack(
                   children: [
@@ -267,34 +267,70 @@ class _MyCameraState extends State<MyCamera> {
                           }
                         },
                       ),
-                    Positioned(
-                      left: 10,
-                      top: 160,
-                      bottom: 240,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          abacaGrades.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(seconds: 1),
-                            width: 45.0,
-                            height: 45.0,
-                            child: ElevatedButton(
-                              onPressed: () => handleClick(index),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(200.0),
-                                ),
-                                padding: const EdgeInsets.all(0),
+
+                       Stack(
+  children: [
+    
+                                          Positioned(
+                                            left: 10,
+                                            top: 180,
+                                            bottom: 200,
+                                            child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [gradient2Color, gradient2Color],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                          ),
+                                          borderRadius: BorderRadius.circular(20.0),
+                                        ),
+                                        child: const Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            SizedBox(
+                                              width: 45.0,
+                                              height: 360.0,
+                                          
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                          ),
+                                      
+                                        Positioned(
+                                                          left: 10,
+                                                          top:180,
+                                                          bottom:200,
+                                                          child: Column(
+                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                            children: List.generate(
+                                                              abacaGrades.length,
+                                                              (index) => SizedBox(
+                                                                width: 45.0,
+                                                                height: 45.0,
+                                                                child: ElevatedButton(
+                                                                  onPressed: () => handleClick(index),
+                                                                  style: ElevatedButton.styleFrom(
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(200.0),
+                                                                    ),
+                                                                    padding: const EdgeInsets.all(0),
+                                                                  elevation: shouldStartMatching
+                                        ? abacaGrades[index] == _recognition
+                                            ? 1 
+                                            : 0 
+                                        : 0, 
                               ),
                               child: Ink(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
+                                  
                                     colors: shouldStartMatching
                                         ? abacaGrades[index] == _recognition
-                                            ? [gradient1Color, gradient2Color]
-                                            : [Colors.white, Colors.white]
-                                        : [Colors.white, Colors.white],
+                                            ? [gradient1Color , gradient1Color ]
+                                            : [gradient2Color, gradient2Color ]
+                                        : [gradient2Color, gradient2Color],
                                     begin: Alignment.topCenter,
                                     end: Alignment.center,
                                   ),
@@ -310,13 +346,15 @@ class _MyCameraState extends State<MyCamera> {
                                     abacaGrades[index],
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
+                                      fontSize: 16.0, 
                                       color: shouldStartMatching
                                           ? abacaGrades[index] == _recognition
-                                              ? Colors.white
-                                              : Colors.black
-                                          : Colors.black,
+                                              ? gradient2Color
+                                              : Colors.white.withOpacity(.5) 
+                                          : Colors.white.withOpacity(.5), 
                                     ),
                                   ),
+
                                 ),
                               ),
                             ),
@@ -324,57 +362,71 @@ class _MyCameraState extends State<MyCamera> {
                         ),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 15),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              setState(() {
-                                _continuousCapture = !_continuousCapture;
-                                shouldStartMatching =
-                                    _continuousCapture; // Update shouldStartMatching
-                              });
-                              if (_continuousCapture) {
-                                _timer = Timer.periodic(
-                                    const Duration(seconds: 1), (timer) {
-                                  if (shouldStartMatching) {
-                                    // Only take picture and start matching if shouldStartMatching is true
-                                    _takePicture(context);
-                                  }
-                                });
-                              } else {
-                                _timer?.cancel();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _continuousCapture
-                                  ? Colors.red
-                                  : Colors.yellow,
-                              padding: EdgeInsets.zero,
-                              shape: const CircleBorder(),
-                            ),
-                            child: const SizedBox(
-                              width: 50,
-                              height: 50,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+  ],
+),
+                    
+
+                    // end list 
+
+
+                    // duplicate list 
+ 
+
+
+
+                    // end duplicate list 
+                    
+                    // Align(
+                    //   alignment: Alignment.bottomCenter,
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.only(bottom: 15),
+                    //     child: Container(
+                    //       decoration: const BoxDecoration(
+                    //         shape: BoxShape.circle,
+                    //         color: Colors.white,
+                    //       ),
+                    //       padding: const EdgeInsets.all(4),
+                    //       child: ElevatedButton(
+                    //         onPressed: () async {
+                    //           setState(() {
+                    //             _continuousCapture = !_continuousCapture;
+                    //             shouldStartMatching =
+                    //                 _continuousCapture; // Update shouldStartMatching
+                    //           });
+                    //           if (_continuousCapture) {
+                    //             _timer = Timer.periodic(
+                    //                 const Duration(seconds: 1), (timer) {
+                    //               if (shouldStartMatching) {
+                    //                 // Only take picture and start matching if shouldStartMatching is true
+                    //                 _takePicture(context);
+                    //               }
+                    //             });
+                    //           } else {
+                    //             _timer?.cancel();
+                    //           }
+                    //         },
+                    //         style: ElevatedButton.styleFrom(
+                    //           backgroundColor: _continuousCapture
+                    //               ? Colors.red
+                    //               : Colors.yellow,
+                    //           padding: EdgeInsets.zero,
+                    //           shape: const CircleBorder(),
+                    //         ),
+                    //         child: const SizedBox(
+                    //           width: 50,
+                    //           height: 50,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
             ),
           ),
           Positioned(
-            top: 55,
+            top: 95,
             left: 10,
             child: SizedBox(
               width: 45.0,
@@ -425,8 +477,12 @@ class _MyCameraState extends State<MyCamera> {
               ),
             ),
           ),
+
+          
+// summary 
+
           Positioned(
-            top: 55,
+            top: 95,
             right: 10,
             child: SizedBox(
               width: 45.0,
@@ -471,8 +527,64 @@ class _MyCameraState extends State<MyCamera> {
               ),
             ),
           ),
+
+
+// end summary 
+
+// picture
+
+
+  Positioned(
+            bottom: 55,
+            left: 160,
+            child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              setState(() {
+                                _continuousCapture = !_continuousCapture;
+                                shouldStartMatching =
+                                    _continuousCapture; // Update shouldStartMatching
+                              });
+                              if (_continuousCapture) {
+                                _timer = Timer.periodic(
+                                    const Duration(seconds: 1), (timer) {
+                                  if (shouldStartMatching) {
+                                    // Only take picture and start matching if shouldStartMatching is true
+                                    _takePicture(context);
+                                  }
+                                });
+                              } else {
+                                _timer?.cancel();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _continuousCapture
+                                  ? Colors.red
+                                  : gradient2Color,
+                              padding: EdgeInsets.zero,
+                              shape: const CircleBorder(),
+                            ),
+                            child: const SizedBox(
+                              width: 50,
+                              height: 50,
+                            ),
+                          ),
+                        ),
+          ),
+
+
+// end picture
+ 
+
+ // print
+
           Positioned(
-            top: 55,
+            top: 95,
             right: 70,
             child: SizedBox(
               width: 45.0,
@@ -519,6 +631,10 @@ class _MyCameraState extends State<MyCamera> {
               ),
             ),
           ),
+
+// end print 
+
+
         ],
       ),
     );
