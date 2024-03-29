@@ -110,8 +110,9 @@ class _MyCameraState extends State<MyCamera> {
       final imagePath = '${takenDirectory.path}/captured.png';
       await File(image!.path).copy(imagePath);
 
-      var averageColor = await getAverageColor(File(imagePath));
-      bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
+      // var averageColor = await getAverageColor(File(imagePath));
+      // bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
+      bool isCloseToBlack = false;
       var prediction = await _classifyImage(File(imagePath));
       setState(() {
         if (!isCloseToBlack) {
@@ -178,12 +179,12 @@ class _MyCameraState extends State<MyCamera> {
     List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
 
-    image = img.flipVertical(image!);
+    // image = img.flipVertical(image!);
 
-    var reduced = img.copyResize(image,
+    var reduced = img.copyResize(image!,
         width: IMAGE_SIZE[0],
         height: IMAGE_SIZE[1],
-        interpolation: img.Interpolation.nearest);
+        interpolation: img.Interpolation.cubic);
 
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
