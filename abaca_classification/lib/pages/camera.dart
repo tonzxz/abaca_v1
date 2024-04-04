@@ -179,12 +179,12 @@ class _MyCameraState extends State<MyCamera> {
     List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
 
-    // image = img.flipVertical(image!);
+    image = img.flipVertical(image!);
 
-    var reduced = img.copyResize(image!,
+    var reduced = img.copyResize(image,
         width: IMAGE_SIZE[0],
         height: IMAGE_SIZE[1],
-        interpolation: img.Interpolation.cubic);
+        interpolation: img.Interpolation.nearest);
 
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
