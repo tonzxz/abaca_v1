@@ -20,28 +20,29 @@ class MyCamera extends StatefulWidget {
 }
 
 class _MyCameraState extends State<MyCamera> {
-  CameraController? _controller;
-  Future<void>? _initializeControllerFuture;
-  bool shouldStartMatching = false; // Add this variable
-  bool _continuousCapture = false;
-  Timer? _timer;
-  String? _recognition;
-  File? _image;
-  String _filename = '';
-
-  bool isActive = false;
-
-  int activeIndex = -1;
-
-  void handleClick(int index) {
-    setState(() {
-      activeIndex = index;
-    });
-  }
-
   // List<String> abacaGrades = [];
   List<String> abacaGrades = ['EF', 'G', 'H', 'I', 'JK', 'M1', 'S2', 'S3'];
+
+  int activeIndex = -1;
+  bool isActive = false;
   bool resultMatches = true;
+  bool shouldStartMatching = false; // Add this variable
+
+  bool _continuousCapture = false;
+  CameraController? _controller;
+  String _filename = '';
+  File? _image;
+  Future<void>? _initializeControllerFuture;
+  String? _recognition;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+    _timer?.cancel();
+    closerModel();
+  }
 
   @override
   void initState() {
@@ -49,6 +50,55 @@ class _MyCameraState extends State<MyCamera> {
     loadModel();
     // loadAbacaGrades();
     _initCamera();
+  }
+
+  void handleClick(int index) {
+    setState(() {
+      activeIndex = index;
+    });
+  }
+
+  closerModel() async {
+    await Tflite.close();
+  }
+
+  Future loadModel() async {
+    await Tflite.loadModel(
+        model: "assets/model/model.tflite",
+        labels: "assets/model/label.txt",
+        numThreads: 1, // defaults to 1
+        isAsset:
+            true, // defaults to true, set to false to load resources outside assets
+        useGpuDelegate:
+            false // defaults to false, set to true to use GPU delegate
+        );
+  }
+
+  Future<Color> getAverageColor(File imageFile) async {
+    // Load the image using the image package
+    var image = img.decodeImage(await imageFile.readAsBytes());
+
+    // Calculate the average color
+    int totalRed = 0;
+    int totalGreen = 0;
+    int totalBlue = 0;
+
+    for (int y = 0; y < image!.height; y++) {
+      for (int x = 0; x < image.width; x++) {
+        int pixel = image.getPixel(x, y);
+        totalRed += img.getRed(pixel);
+        totalGreen += img.getGreen(pixel);
+        totalBlue += img.getBlue(pixel);
+      }
+    }
+
+    int totalPixels = image.width * image.height;
+    int avgRed = totalRed ~/ totalPixels;
+    int avgGreen = totalGreen ~/ totalPixels;
+    int avgBlue = totalBlue ~/ totalPixels;
+
+    // Return the average color
+    return Color.fromRGBO(avgRed, avgGreen, avgBlue, 1.0);
   }
 
   void _initCamera() async {
@@ -64,30 +114,6 @@ class _MyCameraState extends State<MyCamera> {
       setState(() {});
       _controller!.setFlashMode(FlashMode.off);
     });
-  }
-
-  closerModel() async {
-    await Tflite.close();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-    _timer?.cancel();
-    closerModel();
-  }
-
-  Future loadModel() async {
-    await Tflite.loadModel(
-        model: "assets/model/model.tflite",
-        labels: "assets/model/label.txt",
-        numThreads: 1, // defaults to 1
-        isAsset:
-            true, // defaults to true, set to false to load resources outside assets
-        useGpuDelegate:
-            false // defaults to false, set to true to use GPU delegate
-        );
   }
 
   Future<void> _takePicture(BuildContext context) async {
@@ -139,33 +165,6 @@ class _MyCameraState extends State<MyCamera> {
     } catch (e) {
       print(e);
     }
-  }
-
-  Future<Color> getAverageColor(File imageFile) async {
-    // Load the image using the image package
-    var image = img.decodeImage(await imageFile.readAsBytes());
-
-    // Calculate the average color
-    int totalRed = 0;
-    int totalGreen = 0;
-    int totalBlue = 0;
-
-    for (int y = 0; y < image!.height; y++) {
-      for (int x = 0; x < image.width; x++) {
-        int pixel = image.getPixel(x, y);
-        totalRed += img.getRed(pixel);
-        totalGreen += img.getGreen(pixel);
-        totalBlue += img.getBlue(pixel);
-      }
-    }
-
-    int totalPixels = image.width * image.height;
-    int avgRed = totalRed ~/ totalPixels;
-    int avgGreen = totalGreen ~/ totalPixels;
-    int avgBlue = totalBlue ~/ totalPixels;
-
-    // Return the average color
-    return Color.fromRGBO(avgRed, avgGreen, avgBlue, 1.0);
   }
 
   Future<File?> _cropImage({required File imageFile}) async {
@@ -481,52 +480,565 @@ class _MyCameraState extends State<MyCamera> {
           
 // summary 
 
-          Positioned(
-            top: 95,
-            right: 10,
-            child: SizedBox(
-              width: 45.0,
-              height: 45.0,
-              child: ElevatedButton(
-                onPressed: () {
-                  print('Button back pressed');
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(200.0),
-                  ),
-                  padding: const EdgeInsets.all(0),
-                ),
-                child: Ink(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [gradient1Color, gradient2Color],
-                      begin: Alignment.topCenter,
-                      end: Alignment.center,
-                    ),
-                    borderRadius: BorderRadius.circular(80.0),
-                  ),
-                  child: Container(
-                    constraints:
-                        const BoxConstraints(minWidth: 20.0, minHeight: 20.0),
-                    alignment: Alignment.center,
-                    child: IconButton(
-                      icon: SvgPicture.string(
-                        '''
-       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M16 28C9.5 28 4 22.5 4 16C4 11.8564 6.23502 8.11926 9.53935 5.95416C11.308 4.79528 13.383 4.0868 15.5856 4.00746L16 4L16 9C12.134 9 9 12.134 9 16C9 19.866 12.134 23 16 23C19.7855 23 22.8691 19.9952 22.9959 16.2407L23 16H28C28 22.4 22.6679 27.8305 16.2993 27.9961L16 28Z" fill="white"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M20.0003 10.2549L20 4.68374C21.6054 5.22635 23.1054 6.1651 24.5 7.5C25.786 8.731 26.6883 10.1197 27.2068 11.6662L27.312 12L21.7447 11.9992C21.2708 11.32 20.6795 10.7288 20.0003 10.2549Z" fill="white"/>
-</svg>
+                    Positioned(
+                    top: 95,
+                    right: 10,
+                    child: SizedBox(
+                      width: 45.0,
+                      height: 45.0,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          print("Modal bukas");
+                        // modal 
+                          showDialog(
+  context: context,
+  builder: (BuildContext context) {
+  List<String> abacaGrades = ['EF', 'G', 'H', 'I', 'JK', 'M1', 'S2', 'S3'];
 
-        ''',
+
+    return Stack(
+      children: [
+        // Blurred background
+        GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Container(
+            color: Colors.black.withOpacity(0.8),
+          
+          ),
+        ),
+        // Dialog
+        Center(
+          child: Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            elevation: 0.0,
+            backgroundColor: Colors.transparent,
+            
+            child: Padding(
+              padding: const EdgeInsets.all(0.0),
+              child: Container(
+                
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22.0),
+                  color: Colors.white,
+                  
+                ),
+                         
+                child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      "Classified Abaca Grades",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: textSM,
+                        fontWeight: fontSM,
                       ),
-                      onPressed: () {},
                     ),
                   ),
+              
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                        },
+                        child: const Text("Today"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+             
+                        },
+                        child: const Text("Weekly"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+            
+                        },
+                        child: const Text("Monthly"),
+                      ),
+                    ],
+                  ),
+              
+              
+              // today 
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Table(
+                      border: TableBorder.all(),
+                      columnWidths: const {
+                        0: FlexColumnWidth(1),
+                        1: FlexColumnWidth(1),
+                        2: FlexColumnWidth(1),
+                      },
+                      children: [
+                        const TableRow(
+                          children: [
+                            TableCell(
+                              child: Center(
+                                child: Text(
+                                  'Grades',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TableCell(
+                              child: Center(
+                                child: Text(
+                                  'Today',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            TableCell(
+                              child: Center(
+                                child: Text(
+                                  'Average',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        for (String grade in abacaGrades)
+                          TableRow(
+                            children: [
+                              TableCell(
+                                child: Center(
+                                  child: Text(grade),
+                                ),
+                              ),
+                              const TableCell(
+                                child: Center(
+                                  child: Text(''),
+                                ),
+                              ),
+                              const TableCell(
+                                child: Center(
+                                  child: Text(''),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+              
+                  // end of today
+              
+              
+                  // start weekly
+              
+              
+                Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Table(
+                  border: TableBorder.all(),
+                  columnWidths: const {
+                    0: FlexColumnWidth(1),
+                    1: FlexColumnWidth(1),
+                    2: FlexColumnWidth(1),
+                    3: FlexColumnWidth(1),
+                    4: FlexColumnWidth(1),
+                  },
+                  children: [
+                    const TableRow(
+                      children: [
+                        TableCell(
+                          child: Center(
+                            child: Text(
+                              'Grades',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TableCell(
+                          child: Center(
+                            child: Text(
+                              'Week 1',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TableCell(
+                          child: Center(
+                            child: Text(
+                              'Week 2',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TableCell(
+                          child: Center(
+                            child: Text(
+                              'Week 3',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TableCell(
+                          child: Center(
+                            child: Text(
+                              'Week 4',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    for (String grade in abacaGrades)
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Center(
+                              child: Text(grade),
+                            ),
+                          ),
+                          const TableCell(
+                            child: Center(
+                              child: Text(''),
+                            ),
+                          ),
+                          const TableCell(
+                            child: Center(
+                              child: Text(''),
+                            ),
+                          ),
+                          const TableCell(
+                            child: Center(
+                              child: Text(''),
+                            ),
+                          ),
+                          const TableCell(
+                            child: Center(
+                              child: Text(''),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
+              ),
+              
+              
+                  // end weekly
+                  
+              
+                  // start monthly
+              // Padding(
+              //   padding: const EdgeInsets.all(2.0),
+              //   child: Table(
+              //     border: TableBorder.all(),
+              //     columnWidths: {
+              //       0: FlexColumnWidth(3),
+              //       1: FlexColumnWidth(1), 
+              //       2: FlexColumnWidth(1),
+              //       3: FlexColumnWidth(1),
+              //       4: FlexColumnWidth(1),
+              //       5: FlexColumnWidth(1),
+              //       6: FlexColumnWidth(1),
+              //       7: FlexColumnWidth(1),
+              //       8: FlexColumnWidth(1),
+              //       9: FlexColumnWidth(1),
+              //       10: FlexColumnWidth(1),
+              //       11: FlexColumnWidth(1),
+              //       12: FlexColumnWidth(1),
+              //     },
+              //     children: [
+              //       const TableRow(
+              //         children: [
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     'Grades',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Padding(
+              //     padding: EdgeInsets.symmetric(horizontal: 2), // Setting left and right padding to 2
+              //     child: Text(
+              //       '1',
+              //       style: TextStyle(
+              //         fontWeight: FontWeight.bold,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '2',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '3',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '4',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '5',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '6',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '7',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '8',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '9',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '10',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '11',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //           TableCell(
+              // child: Center(
+              //   child: Text(
+              //     '12',
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.bold,
+              //     ),
+              //   ),
+              // ),
+              //           ),
+              //         ],
+              //       ),
+              //       for (String grade in abacaGrades)
+              //         TableRow(
+              //           children: [
+              // TableCell(
+              //   child: Center(
+              //     child: Text(grade),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              // TableCell(
+              //   child: Center(
+              //     child: Text(''),
+              //   ),
+              // ),
+              //           ],
+              //         ),
+              //     ],
+              //   ),
+              // ),
+              
+              
+                  // end monthly
+                 
+              
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("Close"),
+                  ),
+                ],
+              ),
+              
               ),
             ),
           ),
+        ),
+      ],
+    );
+  },
+);
+
+
+
+
+
+        // end modal 
+      },
+      style: ElevatedButton.styleFrom(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22.5), // half of the button height
+        ),
+        padding: const EdgeInsets.all(0),
+      ),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [gradient1Color, gradient2Color],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter, // Adjusted the gradient to top-bottom
+          ),
+          borderRadius: BorderRadius.circular(22.5), // half of the button height
+        ),
+        child: Container(
+          alignment: Alignment.center,
+          child: SvgPicture.string(
+            '''
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M16 28C9.5 28 4 22.5 4 16C4 11.8564 6.23502 8.11926 9.53935 5.95416C11.308 4.79528 13.383 4.0868 15.5856 4.00746L16 4L16 9C12.134 9 9 12.134 9 16C9 19.866 12.134 23 16 23C19.7855 23 22.8691 19.9952 22.9959 16.2407L23 16H28C28 22.4 22.6679 27.8305 16.2993 27.9961L16 28Z" fill="white"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M20.0003 10.2549L20 4.68374C21.6054 5.22635 23.1054 6.1651 24.5 7.5C25.786 8.731 26.6883 10.1197 27.2068 11.6662L27.312 12L21.7447 11.9992C21.2708 11.32 20.6795 10.7288 20.0003 10.2549Z" fill="white"/>
+            </svg>
+            ''',
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+
+
+
 
 
 // end summary 

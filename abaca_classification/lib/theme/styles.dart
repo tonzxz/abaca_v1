@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 const double sizedBoxSM = 10;
 const double sizedBoxLG = 20;
 const double borderRadius = 30;
-const double textSM = 16;
+const double textSM = 20;
 const double textMD = 24;
 const double textLG = 40;
 const FontWeight fontSM = FontWeight.w400;
