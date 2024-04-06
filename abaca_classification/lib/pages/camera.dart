@@ -6,11 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:abaca_classification/theme/styles.dart';
 import 'package:abaca_classification/pages/choices.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class MyCamera extends StatefulWidget {
   const MyCamera({Key? key}) : super(key: key);
@@ -73,6 +75,15 @@ class _MyCameraState extends State<MyCamera> {
             false // defaults to false, set to true to use GPU delegate
         );
   }
+
+  // per day
+
+  final DatabaseReference _databaseReference = FirebaseDatabase.instance
+      .reference()
+      .child(
+          '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}');
+
+  // end per day
 
   Future<Color> getAverageColor(File imageFile) async {
     // Load the image using the image package
@@ -140,6 +151,7 @@ class _MyCameraState extends State<MyCamera> {
       // bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
       bool isCloseToBlack = false;
       var prediction = await _classifyImage(File(imagePath));
+
       setState(() {
         if (!isCloseToBlack) {
           _recognition = prediction;
@@ -148,20 +160,75 @@ class _MyCameraState extends State<MyCamera> {
         }
         _image = File(imagePath);
       });
-      // print('Raw: $_recognition');
-      // print(
-      //     'Recognition: ${_recognition.where((recog) => abacaGrades.contains(recog)).join(', ')}');
-      // print('Abaca Grades: $abacaGrades');
 
-      // bool resultMatches =
-      //     _recognition.any((recog) => abacaGrades.contains(recog));
+      if (_recognition != null) {
+        try {
+          // OLD
+          // DatabaseReference gradesRef =
+          //     FirebaseDatabase.instance.reference().child('Grades');
+          // // Check if the grade already exists in the database
+          // DatabaseEvent event = await gradesRef.child(_recognition!).once();
+          // DataSnapshot snapshot = event.snapshot;
 
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text('$_recognition'.replaceAll(RegExp(r'\[|\]'), '')),
-      //     duration: const Duration(seconds: 1),
-      //   ),
-      // );
+          // if (snapshot.value != null) {
+          //   // If the grade exists, increment its count
+          //   int count = snapshot.value as int;
+          //   await gradesRef.child(_recognition!).set(count + 1);
+          //   final player = AudioPlayer();
+          //   player.play(AssetSource('classify.mp3'));
+          // } else {
+          //   // If the grade doesn't exist, set its count to 1
+          //   await gradesRef.child(_recognition!).set(1);
+          // }
+
+          // Get date today
+          String today =
+              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}'; // 4-4-2024
+          DatabaseReference todayRef =
+              FirebaseDatabase.instance.reference().child(today);
+          DatabaseEvent eventToday = await todayRef.once();
+          if (eventToday.snapshot.value != null) {
+            //  If has today
+            DatabaseEvent event = await todayRef.child(_recognition!).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(_recognition!).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(_recognition!).set(1);
+            }
+          } else {
+            // If no today
+            DatabaseEvent event = await todayRef.child(_recognition!).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(_recognition!).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(_recognition!).set(1);
+            }
+          }
+
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(_recognition!.replaceAll(RegExp(r'\[|\]'), '')),
+          //     duration: const Duration(seconds: 1),
+          //   ),
+          // );
+        } catch (e) {
+          print('Error saving to database: $e');
+        }
+      }
     } catch (e) {
       print(e);
     }
@@ -222,6 +289,7 @@ class _MyCameraState extends State<MyCamera> {
     //     labels.toSet().containsAll(abacaGrades.toSet());
 
     // print(labels.join(', '));
+
     return labels.isNotEmpty ? labels[0] : null;
   }
 
@@ -267,114 +335,111 @@ class _MyCameraState extends State<MyCamera> {
                         },
                       ),
 
-                       Stack(
-  children: [
-    
-                                          Positioned(
-                                            left: 10,
-                                            top: 180,
-                                            bottom: 200,
-                                            child: Container(
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [gradient2Color, gradient2Color],
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                          ),
-                                          borderRadius: BorderRadius.circular(20.0),
-                                        ),
-                                        child: const Column(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            SizedBox(
-                                              width: 45.0,
-                                              height: 360.0,
-                                          
-                                            ),
-                                          ],
+                    Stack(
+                      children: [
+                        Positioned(
+                          left: 10,
+                          top: 180,
+                          bottom: 200,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [gradient2Color, gradient2Color],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              borderRadius: BorderRadius.circular(20.0),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                SizedBox(
+                                  width: 45.0,
+                                  height: 360.0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 10,
+                          top: 180,
+                          bottom: 200,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              abacaGrades.length,
+                              (index) => SizedBox(
+                                width: 45.0,
+                                height: 45.0,
+                                child: ElevatedButton(
+                                  onPressed: () => handleClick(index),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(200.0),
+                                    ),
+                                    padding: const EdgeInsets.all(0),
+                                    elevation: shouldStartMatching
+                                        ? abacaGrades[index] == _recognition
+                                            ? 1
+                                            : 0
+                                        : 0,
+                                  ),
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: shouldStartMatching
+                                            ? abacaGrades[index] == _recognition
+                                                ? [
+                                                    gradient1Color,
+                                                    gradient1Color
+                                                  ]
+                                                : [
+                                                    gradient2Color,
+                                                    gradient2Color
+                                                  ]
+                                            : [gradient2Color, gradient2Color],
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.center,
+                                      ),
+                                      borderRadius: BorderRadius.circular(80.0),
+                                    ),
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        minWidth: 20.0,
+                                        minHeight: 20.0,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        abacaGrades[index],
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16.0,
+                                          color: shouldStartMatching
+                                              ? abacaGrades[index] ==
+                                                      _recognition
+                                                  ? gradient2Color
+                                                  : Colors.white.withOpacity(.5)
+                                              : Colors.white.withOpacity(.5),
                                         ),
                                       ),
-
-                                          ),
-                                      
-                                        Positioned(
-                                                          left: 10,
-                                                          top:180,
-                                                          bottom:200,
-                                                          child: Column(
-                                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                            children: List.generate(
-                                                              abacaGrades.length,
-                                                              (index) => SizedBox(
-                                                                width: 45.0,
-                                                                height: 45.0,
-                                                                child: ElevatedButton(
-                                                                  onPressed: () => handleClick(index),
-                                                                  style: ElevatedButton.styleFrom(
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius: BorderRadius.circular(200.0),
-                                                                    ),
-                                                                    padding: const EdgeInsets.all(0),
-                                                                  elevation: shouldStartMatching
-                                        ? abacaGrades[index] == _recognition
-                                            ? 1 
-                                            : 0 
-                                        : 0, 
-                              ),
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                  
-                                    colors: shouldStartMatching
-                                        ? abacaGrades[index] == _recognition
-                                            ? [gradient1Color , gradient1Color ]
-                                            : [gradient2Color, gradient2Color ]
-                                        : [gradient2Color, gradient2Color],
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.center,
-                                  ),
-                                  borderRadius: BorderRadius.circular(80.0),
-                                ),
-                                child: Container(
-                                  constraints: const BoxConstraints(
-                                    minWidth: 20.0,
-                                    minHeight: 20.0,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    abacaGrades[index],
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 16.0, 
-                                      color: shouldStartMatching
-                                          ? abacaGrades[index] == _recognition
-                                              ? gradient2Color
-                                              : Colors.white.withOpacity(.5) 
-                                          : Colors.white.withOpacity(.5), 
                                     ),
                                   ),
-
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-  ],
-),
-                    
 
-                    // end list 
+                    // end list
 
+                    // duplicate list
 
-                    // duplicate list 
- 
+                    // end duplicate list
 
-
-
-                    // end duplicate list 
-                    
                     // Align(
                     //   alignment: Alignment.bottomCenter,
                     //   child: Padding(
@@ -477,623 +542,290 @@ class _MyCameraState extends State<MyCamera> {
             ),
           ),
 
-          
-// summary 
+// summary
 
-                    Positioned(
-                    top: 95,
-                    right: 10,
-                    child: SizedBox(
-                      width: 45.0,
-                      height: 45.0,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          print("Modal bukas");
-                        // modal 
-                          showDialog(
-  context: context,
-  builder: (BuildContext context) {
-  List<String> abacaGrades = ['EF', 'G', 'H', 'I', 'JK', 'M1', 'S2', 'S3'];
+          Positioned(
+            top: 95,
+            right: 10,
+            child: SizedBox(
+              width: 45.0,
+              height: 45.0,
+              child: ElevatedButton(
+                onPressed: () {
+                  print("Modal bukas");
+                  // modal
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      List<String> abacaGrades = [
+                        'EF',
+                        'G',
+                        'H',
+                        'I',
+                        'JK',
+                        'M1',
+                        'S2',
+                        'S3'
+                      ];
 
-
-    return Stack(
-      children: [
-        // Blurred background
-        GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Container(
-            color: Colors.black.withOpacity(0.8),
-          
-          ),
-        ),
-        // Dialog
-        Center(
-          child: Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            elevation: 0.0,
-            backgroundColor: Colors.transparent,
-            
-            child: Padding(
-              padding: const EdgeInsets.all(0.0),
-              child: Container(
-                
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22.0),
-                  color: Colors.white,
-                  
-                ),
-                         
-                child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      "Classified Abaca Grades",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: textSM,
-                        fontWeight: fontSM,
-                      ),
-                    ),
-                  ),
-              
-                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                        },
-                        child: const Text("Today"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-             
-                        },
-                        child: const Text("Weekly"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-            
-                        },
-                        child: const Text("Monthly"),
-                      ),
-                    ],
-                  ),
-              
-              
-              // today 
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Table(
-                      border: TableBorder.all(),
-                      columnWidths: const {
-                        0: FlexColumnWidth(1),
-                        1: FlexColumnWidth(1),
-                        2: FlexColumnWidth(1),
-                      },
-                      children: [
-                        const TableRow(
-                          children: [
-                            TableCell(
-                              child: Center(
-                                child: Text(
-                                  'Grades',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            TableCell(
-                              child: Center(
-                                child: Text(
-                                  'Today',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            TableCell(
-                              child: Center(
-                                child: Text(
-                                  'Average',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        for (String grade in abacaGrades)
-                          TableRow(
-                            children: [
-                              TableCell(
-                                child: Center(
-                                  child: Text(grade),
-                                ),
-                              ),
-                              const TableCell(
-                                child: Center(
-                                  child: Text(''),
-                                ),
-                              ),
-                              const TableCell(
-                                child: Center(
-                                  child: Text(''),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-              
-                  // end of today
-              
-              
-                  // start weekly
-              
-              
-                Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Table(
-                  border: TableBorder.all(),
-                  columnWidths: const {
-                    0: FlexColumnWidth(1),
-                    1: FlexColumnWidth(1),
-                    2: FlexColumnWidth(1),
-                    3: FlexColumnWidth(1),
-                    4: FlexColumnWidth(1),
-                  },
-                  children: [
-                    const TableRow(
-                      children: [
-                        TableCell(
-                          child: Center(
-                            child: Text(
-                              'Grades',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Center(
-                            child: Text(
-                              'Week 1',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Center(
-                            child: Text(
-                              'Week 2',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Center(
-                            child: Text(
-                              'Week 3',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        TableCell(
-                          child: Center(
-                            child: Text(
-                              'Week 4',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    for (String grade in abacaGrades)
-                      TableRow(
+                      return Stack(
                         children: [
-                          TableCell(
-                            child: Center(
-                              child: Text(grade),
+                          // Blurred background
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              color: Colors.black.withOpacity(0.8),
                             ),
                           ),
-                          const TableCell(
+                          // Dialog
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
                             child: Center(
-                              child: Text(''),
-                            ),
-                          ),
-                          const TableCell(
-                            child: Center(
-                              child: Text(''),
-                            ),
-                          ),
-                          const TableCell(
-                            child: Center(
-                              child: Text(''),
-                            ),
-                          ),
-                          const TableCell(
-                            child: Center(
-                              child: Text(''),
+                              child: Dialog(
+                                elevation: 0.0,
+                                backgroundColor: Colors.transparent,
+                                child: Container(
+                                  constraints: BoxConstraints(
+                                      maxHeight: MediaQuery.of(context)
+                                              .size
+                                              .height *
+                                          0.9), // Adjust the maximum height as needed
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(32.0),
+                                    color: Colors.white,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      const Padding(
+                                        padding:
+                                            EdgeInsets.fromLTRB(8, 16.0, 8, 16),
+                                        child: Center(
+                                          child: Text(
+                                            "Classified Abaca Fibers",
+                                            style: TextStyle(
+                                              color: gradient2Color,
+                                              fontSize:
+                                                  24, // Adjust font size as needed
+                                              fontWeight: FontWeight
+                                                  .w600, // Adjust font weight as needed
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            16, 0, 16, 32),
+                                        child: Flexible(
+                                          child: StreamBuilder<DatabaseEvent>(
+                                            stream: _databaseReference.onValue,
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<DatabaseEvent>
+                                                    snapshot) {
+                                              if (snapshot.hasData) {
+                                                Map<dynamic, dynamic> data =
+                                                    snapshot.data!.snapshot
+                                                            .value
+                                                        as Map<dynamic,
+                                                            dynamic>;
+                                                List<TableRow> rows = [];
+
+                                                // Add header row
+                                                rows.add(
+                                                  TableRow(
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        child: Text(
+                                                          'Grades',
+                                                          style: TextStyle(
+                                                            color:
+                                                                gradient2Color,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        child: Text(
+                                                          'Classified',
+                                                          style: TextStyle(
+                                                            color:
+                                                                gradient2Color,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+
+                                                // Add data rows
+                                                data.forEach((key, value) {
+                                                  rows.add(
+                                                    TableRow(
+                                                      children: [
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          child: Text(
+                                                            key,
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                          ),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8),
+                                                          child: Text(
+                                                            '$value',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                });
+
+                                                return Table(
+                                                  border: TableBorder.all(
+                                                      color: gradient2Color),
+                                                  children: rows,
+                                                );
+                                              } else if (snapshot.hasError) {
+                                                return Center(
+                                                  child: Text(
+                                                      'Error: ${snapshot.error}'),
+                                                );
+                                              } else {
+                                                return const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                  ],
-                ),
-              ),
-              
-              
-                  // end weekly
-                  
-              
-                  // start monthly
-              // Padding(
-              //   padding: const EdgeInsets.all(2.0),
-              //   child: Table(
-              //     border: TableBorder.all(),
-              //     columnWidths: {
-              //       0: FlexColumnWidth(3),
-              //       1: FlexColumnWidth(1), 
-              //       2: FlexColumnWidth(1),
-              //       3: FlexColumnWidth(1),
-              //       4: FlexColumnWidth(1),
-              //       5: FlexColumnWidth(1),
-              //       6: FlexColumnWidth(1),
-              //       7: FlexColumnWidth(1),
-              //       8: FlexColumnWidth(1),
-              //       9: FlexColumnWidth(1),
-              //       10: FlexColumnWidth(1),
-              //       11: FlexColumnWidth(1),
-              //       12: FlexColumnWidth(1),
-              //     },
-              //     children: [
-              //       const TableRow(
-              //         children: [
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     'Grades',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Padding(
-              //     padding: EdgeInsets.symmetric(horizontal: 2), // Setting left and right padding to 2
-              //     child: Text(
-              //       '1',
-              //       style: TextStyle(
-              //         fontWeight: FontWeight.bold,
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '2',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '3',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '4',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '5',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '6',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '7',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '8',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '9',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '10',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '11',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //           TableCell(
-              // child: Center(
-              //   child: Text(
-              //     '12',
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.bold,
-              //     ),
-              //   ),
-              // ),
-              //           ),
-              //         ],
-              //       ),
-              //       for (String grade in abacaGrades)
-              //         TableRow(
-              //           children: [
-              // TableCell(
-              //   child: Center(
-              //     child: Text(grade),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              // TableCell(
-              //   child: Center(
-              //     child: Text(''),
-              //   ),
-              // ),
-              //           ],
-              //         ),
-              //     ],
-              //   ),
-              // ),
-              
-              
-                  // end monthly
-                 
-              
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
+                      );
                     },
-                    child: const Text("Close"),
+                  );
+
+                  // end modal
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        22.5), // half of the button height
                   ),
-                ],
-              ),
-              
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  },
-);
-
-
-
-
-
-        // end modal 
-      },
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22.5), // half of the button height
-        ),
-        padding: const EdgeInsets.all(0),
-      ),
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [gradient1Color, gradient2Color],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter, // Adjusted the gradient to top-bottom
-          ),
-          borderRadius: BorderRadius.circular(22.5), // half of the button height
-        ),
-        child: Container(
-          alignment: Alignment.center,
-          child: SvgPicture.string(
-            '''
+                  padding: const EdgeInsets.all(0),
+                ),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [gradient1Color, gradient2Color],
+                      begin: Alignment.topCenter,
+                      end: Alignment
+                          .bottomCenter, // Adjusted the gradient to top-bottom
+                    ),
+                    borderRadius: BorderRadius.circular(
+                        22.5), // half of the button height
+                  ),
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: SvgPicture.string(
+                      '''
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M16 28C9.5 28 4 22.5 4 16C4 11.8564 6.23502 8.11926 9.53935 5.95416C11.308 4.79528 13.383 4.0868 15.5856 4.00746L16 4L16 9C12.134 9 9 12.134 9 16C9 19.866 12.134 23 16 23C19.7855 23 22.8691 19.9952 22.9959 16.2407L23 16H28C28 22.4 22.6679 27.8305 16.2993 27.9961L16 28Z" fill="white"/>
               <path fill-rule="evenodd" clip-rule="evenodd" d="M20.0003 10.2549L20 4.68374C21.6054 5.22635 23.1054 6.1651 24.5 7.5C25.786 8.731 26.6883 10.1197 27.2068 11.6662L27.312 12L21.7447 11.9992C21.2708 11.32 20.6795 10.7288 20.0003 10.2549Z" fill="white"/>
             </svg>
             ''',
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
-    ),
-  ),
-),
 
-
-
-
-
-// end summary 
+// end summary
 
 // picture
 
-
-  Positioned(
+          Positioned(
             bottom: 55,
             left: 160,
             child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              setState(() {
-                                _continuousCapture = !_continuousCapture;
-                                shouldStartMatching =
-                                    _continuousCapture; // Update shouldStartMatching
-                              });
-                              if (_continuousCapture) {
-                                _timer = Timer.periodic(
-                                    const Duration(seconds: 1), (timer) {
-                                  if (shouldStartMatching) {
-                                    // Only take picture and start matching if shouldStartMatching is true
-                                    _takePicture(context);
-                                  }
-                                });
-                              } else {
-                                _timer?.cancel();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _continuousCapture
-                                  ? Colors.red
-                                  : gradient2Color,
-                              padding: EdgeInsets.zero,
-                              shape: const CircleBorder(),
-                            ),
-                            child: const SizedBox(
-                              width: 50,
-                              height: 50,
-                            ),
-                          ),
-                        ),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.all(4),
+              child: ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    _continuousCapture = !_continuousCapture;
+                    shouldStartMatching =
+                        _continuousCapture; // Update shouldStartMatching
+                  });
+                  if (_continuousCapture) {
+                    _timer =
+                        Timer.periodic(const Duration(seconds: 1), (timer) {
+                      if (shouldStartMatching) {
+                        // Only take picture and start matching if shouldStartMatching is true
+                        _takePicture(
+                          context,
+                        );
+                      }
+                    });
+                  } else {
+                    _timer?.cancel();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _continuousCapture ? Colors.red : gradient2Color,
+                  padding: EdgeInsets.zero,
+                  shape: const CircleBorder(),
+                ),
+                child: const SizedBox(
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+            ),
           ),
 
-
 // end picture
- 
 
- // print
+          // print
 
           Positioned(
             top: 95,
@@ -1144,9 +876,7 @@ class _MyCameraState extends State<MyCamera> {
             ),
           ),
 
-// end print 
-
-
+// end print
         ],
       ),
     );

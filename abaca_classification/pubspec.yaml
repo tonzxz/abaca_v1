@@ -38,12 +38,18 @@ dependencies:
   flutter_tflite: ^1.0.1
   # image_picker: ^0.8.9
   image_cropper: ^5.0.1
+  open_file: ^3.3.2
   firebase_auth: ^4.17.6
+  firebase_database: ^10.5.0
   firebase_core: ^2.25.5
+  file_picker: ^8.0.0+1
   firebase_messaging: ^14.7.17
   firebase_storage: ^11.6.7
   cloud_firestore: ^4.15.6
   flutter_svg: ^2.0.10+1
+  url_launcher: ^6.2.5
+  audioplayers: ^6.0.0
+  pdf: ^3.8.4
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +81,7 @@ flutter:
     - assets/images/abacalogo.png
     - assets/model/model.tflite
     - assets/model/label.txt
+    - assets/classify.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
