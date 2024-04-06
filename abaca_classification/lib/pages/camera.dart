@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
+import 'package:open_file/open_file.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:abaca_classification/theme/styles.dart';
 import 'package:abaca_classification/pages/choices.dart';
@@ -126,6 +128,79 @@ class _MyCameraState extends State<MyCamera> {
       _controller!.setFlashMode(FlashMode.off);
     });
   }
+
+  // pdf print
+  Future<void> _createPDF() async {
+    //Create a new PDF document
+    PdfDocument document = PdfDocument();
+
+    //Add a new page and draw text
+    document.pages.add().graphics.drawString(
+        'Classified Abaca Grades', PdfStandardFont(PdfFontFamily.helvetica, 20),
+        brush: PdfSolidBrush(PdfColor(0, 0, 0)),
+        bounds: Rect.fromLTWH(0, 0, 500, 50));
+
+    //Create a new PDF document
+
+//Create a PdfGrid class
+    PdfGrid grid = PdfGrid();
+
+//Add the columns to the grid
+    grid.columns.add(count: 3);
+
+//Add header to the grid
+    grid.headers.add(1);
+
+//Add the rows to the grid
+    PdfGridRow header = grid.headers[0];
+    header.cells[0].value = 'Employee ID';
+    header.cells[1].value = 'Employee Name';
+    header.cells[2].value = 'Salary';
+
+//Add rows to grid
+    PdfGridRow row = grid.rows.add();
+    row.cells[0].value = 'E01';
+    row.cells[1].value = 'Clay';
+    row.cells[2].value = '\$10,000';
+
+    row = grid.rows.add();
+    row.cells[0].value = 'E02';
+    row.cells[1].value = 'Simon';
+    row.cells[2].value = '\$12,000';
+
+//Set the grid style
+    grid.style = PdfGridStyle(
+        cellPadding: PdfPaddings(left: 2, right: 3, top: 4, bottom: 5),
+        backgroundBrush: PdfBrushes.blue,
+        textBrush: PdfBrushes.white,
+        font: PdfStandardFont(PdfFontFamily.timesRoman, 25));
+
+//Draw the grid
+    grid.draw(
+        page: document.pages.add(), bounds: const Rect.fromLTWH(0, 0, 0, 0));
+
+    //Save the document
+    List<int> bytes = await document.save();
+
+    //Dispose the document
+    document.dispose();
+
+    //Get external storage directory
+    final directory = await getApplicationSupportDirectory();
+
+//Get directory path
+    final path = directory.path;
+
+//Create an empty file to write PDF data
+    File file = File('$path/Output.pdf');
+
+//Write PDF data
+    await file.writeAsBytes(bytes, flush: true);
+
+//Open the PDF document in mobile
+    OpenFile.open('$path/Output.pdf');
+  }
+  // end pdf print
 
   Future<void> _takePicture(BuildContext context) async {
     if (_controller == null || !_controller!.value.isInitialized) {
@@ -723,6 +798,118 @@ class _MyCameraState extends State<MyCamera> {
                                                   child:
                                                       CircularProgressIndicator(),
                                                 );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      // Download PDF button
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Flexible(
+                                          child: StreamBuilder<DatabaseEvent>(
+                                            stream: _databaseReference.onValue,
+                                            builder: (BuildContext context,
+                                                AsyncSnapshot<DatabaseEvent>
+                                                    snapshot) {
+                                              if (snapshot.hasData) {
+                                                Map<dynamic, dynamic> data =
+                                                    snapshot.data!.snapshot
+                                                            .value
+                                                        as Map<dynamic,
+                                                            dynamic>;
+
+                                                return ElevatedButton(
+                                                  onPressed: () async {
+                                                    // Create a new PDF document
+                                                    PdfDocument document =
+                                                        PdfDocument();
+
+                                                    // Add a new page to the document
+                                                    PdfPage page =
+                                                        document.pages.add();
+
+                                                    // Create a PdfGrid
+                                                    PdfGrid grid = PdfGrid();
+
+                                                    // Add the columns to the grid
+                                                    grid.columns.add(count: 2);
+
+                                                    // Add header to the grid
+                                                    grid.headers.add(1);
+
+                                                    // Set the header values
+                                                    PdfGridRow header =
+                                                        grid.headers[0];
+                                                    header.cells[0].value =
+                                                        'Grades';
+                                                    header.cells[1].value =
+                                                        'Classified';
+
+                                                    // Add data rows to the grid
+                                                    data.forEach((key, value) {
+                                                      PdfGridRow row =
+                                                          grid.rows.add();
+                                                      row.cells[0].value = key;
+                                                      row.cells[1].value =
+                                                          value.toString();
+                                                    });
+
+                                                    // Set the grid style
+                                                    grid.style = PdfGridStyle(
+                                                      cellPadding: PdfPaddings(
+                                                          left: 2,
+                                                          right: 3,
+                                                          top: 4,
+                                                          bottom: 5),
+                                                      backgroundBrush:
+                                                          PdfBrushes.white,
+                                                      textBrush:
+                                                          PdfBrushes.black,
+                                                      font: PdfStandardFont(
+                                                          PdfFontFamily.courier,
+                                                          25),
+                                                    );
+
+                                                    // Draw the grid on the page
+                                                    grid.draw(
+                                                      page: page,
+                                                      bounds:
+                                                          const Rect.fromLTWH(
+                                                              0, 0, 0, 0),
+                                                    );
+
+                                                    // Save the document
+                                                    List<int> bytes =
+                                                        await document.save();
+
+                                                    // Dispose the document
+                                                    document.dispose();
+
+                                                    // Get external storage directory
+                                                    final directory =
+                                                        await getApplicationSupportDirectory();
+
+                                                    // Get directory path
+                                                    final path = directory.path;
+
+                                                    // Create an empty file to write PDF data
+                                                    File file = File(
+                                                        '$path/Output.pdf');
+
+                                                    // Write PDF data to the file
+                                                    await file.writeAsBytes(
+                                                        bytes,
+                                                        flush: true);
+
+                                                    // Open the PDF document in mobile
+                                                    OpenFile.open(
+                                                        '$path/Output.pdf');
+                                                  },
+                                                  child: Text('Download PDF'),
+                                                );
+                                              } else {
+                                                return CircularProgressIndicator();
                                               }
                                             },
                                           ),
