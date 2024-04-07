@@ -73,7 +73,7 @@ class _MyCameraState extends State<MyCamera> {
     setState(() {
       _onFlickerFrame = true;
     });
-    _flickerTimer = Timer(const Duration(milliseconds: 1500), () async{
+    _flickerTimer = Timer(const Duration(milliseconds: 500), () async{
       setState(() {
         _onFlickerFrame = false;
         _lastPrediction = prediction;
