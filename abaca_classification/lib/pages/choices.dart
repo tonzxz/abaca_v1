@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:abaca_classification/pages/camera.dart';
 import 'package:abaca_classification/theme/styles.dart';
-import 'package:abaca_classification/pages/landingpage.dart';
+import 'package:abaca_classification/pages/grades.dart';
 import 'package:abaca_classification/components/iconbutton.dart';
 
 class MyChoices extends StatefulWidget {
@@ -55,7 +55,7 @@ class _MyChoicesState extends State<MyChoices> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const MyLandingPage(),
+                        builder: (context) => const MyGrades(),
                       ),
                     );
                   },

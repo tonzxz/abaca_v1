@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:abaca_classification/firebase_options.dart';
 import 'package:abaca_classification/theme/styles.dart'; // Ensure this file defines gradient1Color and gradient2Color
 import 'package:abaca_classification/pages/home.dart'; // Ensure this file and the HomePage widget are correctly defined
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.android,
+  );
   runApp(const MyApp());
 }
 
@@ -13,6 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'Nunito'),
       home: Scaffold(
         body: Container(
           decoration: const BoxDecoration(
