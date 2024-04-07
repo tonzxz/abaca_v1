@@ -39,6 +39,9 @@ class _MyCameraState extends State<MyCamera> {
   Future<void>? _initializeControllerFuture;
   String? _recognition;
   Timer? _timer;
+  String? _lastPrediction;
+  bool _onFlickerFrame = false;
+  Timer? _flickerTimer ;
 
   @override
   void dispose() {
@@ -64,6 +67,70 @@ class _MyCameraState extends State<MyCamera> {
 
   closerModel() async {
     await Tflite.close();
+  }
+
+  enterFlickerFrame(String? prediction) async{
+    setState(() {
+      _onFlickerFrame = true;
+    });
+    _flickerTimer = Timer(Duration(milliseconds: 3000), () async{
+      setState(() {
+        _onFlickerFrame = false;
+        _lastPrediction = prediction;
+        
+      });
+       if (prediction != null) {
+        try {
+          // skip if no changes in prediction, or on flicker frame
+          // Get date today
+          String today =
+              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}'; // 4-4-2024
+          DatabaseReference todayRef =
+              FirebaseDatabase.instance.reference().child(today);
+          DatabaseEvent eventToday = await todayRef.once();
+          if (eventToday.snapshot.value != null) {
+            //  If has today
+            DatabaseEvent event = await todayRef.child(prediction).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(prediction).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(prediction).set(1);
+            }
+          } else {
+            // If no today
+            DatabaseEvent event = await todayRef.child(prediction).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(prediction).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(prediction).set(1);
+            }
+          }
+
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(_recognition!.replaceAll(RegExp(r'\[|\]'), '')),
+          //     duration: const Duration(seconds: 1),
+          //   ),
+          // );
+        } catch (e) {
+          print('Error saving to database: $e');
+        }
+      }
+    });
   }
 
   Future loadModel() async {
@@ -224,86 +291,29 @@ class _MyCameraState extends State<MyCamera> {
 
       // var averageColor = await getAverageColor(File(imagePath));
       // bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
-      bool isCloseToBlack = false;
+      // bool isCloseToBlack = false;
       var prediction = await _classifyImage(File(imagePath));
-
-      setState(() {
-        if (!isCloseToBlack) {
-          _recognition = prediction;
-        } else {
-          _recognition = null;
+      if(prediction != _lastPrediction){
+        // check if app is on flicker frame
+        if(!_onFlickerFrame){
+          // if not on flicker frame, start another flicker fame and pass prediction
+          enterFlickerFrame(prediction);
         }
+      }else{
+        // cancel any changes comming from flicker frame
+        setState(() {
+          _onFlickerFrame = false;
+          _flickerTimer?.cancel();
+        });
+      }
+      setState(() {
+        // if (!isCloseToBlack) {
+          _recognition = _lastPrediction;
+        // }
         _image = File(imagePath);
       });
 
-      if (_recognition != null) {
-        try {
-          // OLD
-          // DatabaseReference gradesRef =
-          //     FirebaseDatabase.instance.reference().child('Grades');
-          // // Check if the grade already exists in the database
-          // DatabaseEvent event = await gradesRef.child(_recognition!).once();
-          // DataSnapshot snapshot = event.snapshot;
 
-          // if (snapshot.value != null) {
-          //   // If the grade exists, increment its count
-          //   int count = snapshot.value as int;
-          //   await gradesRef.child(_recognition!).set(count + 1);
-          //   final player = AudioPlayer();
-          //   player.play(AssetSource('classify.mp3'));
-          // } else {
-          //   // If the grade doesn't exist, set its count to 1
-          //   await gradesRef.child(_recognition!).set(1);
-          // }
-
-          // Get date today
-          String today =
-              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}'; // 4-4-2024
-          DatabaseReference todayRef =
-              FirebaseDatabase.instance.reference().child(today);
-          DatabaseEvent eventToday = await todayRef.once();
-          if (eventToday.snapshot.value != null) {
-            //  If has today
-            DatabaseEvent event = await todayRef.child(_recognition!).once();
-            DataSnapshot snapshot = event.snapshot;
-
-            if (snapshot.value != null) {
-              // If the grade exists, increment its count
-              int count = snapshot.value as int;
-              await todayRef.child(_recognition!).set(count + 1);
-              final player = AudioPlayer();
-              player.play(AssetSource('classify.mp3'));
-            } else {
-              // If the grade doesn't exist, set its count to 1
-              await todayRef.child(_recognition!).set(1);
-            }
-          } else {
-            // If no today
-            DatabaseEvent event = await todayRef.child(_recognition!).once();
-            DataSnapshot snapshot = event.snapshot;
-
-            if (snapshot.value != null) {
-              // If the grade exists, increment its count
-              int count = snapshot.value as int;
-              await todayRef.child(_recognition!).set(count + 1);
-              final player = AudioPlayer();
-              player.play(AssetSource('classify.mp3'));
-            } else {
-              // If the grade doesn't exist, set its count to 1
-              await todayRef.child(_recognition!).set(1);
-            }
-          }
-
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(
-          //     content: Text(_recognition!.replaceAll(RegExp(r'\[|\]'), '')),
-          //     duration: const Duration(seconds: 1),
-          //   ),
-          // );
-        } catch (e) {
-          print('Error saving to database: $e');
-        }
-      }
     } catch (e) {
       print(e);
     }
@@ -362,10 +372,8 @@ class _MyCameraState extends State<MyCamera> {
     // // Check if all elements in abacaGrades are present in labels and vice versa
     // resultMatches = abacaGrades.toSet().containsAll(labels.toSet()) &&
     //     labels.toSet().containsAll(abacaGrades.toSet());
-
-    // print(labels.join(', '));
-
-    return labels.isNotEmpty ? labels[0] : null;
+    
+    return  labels.isNotEmpty ? labels[0] : null;
   }
 
   @override
@@ -707,8 +715,7 @@ class _MyCameraState extends State<MyCamera> {
                                                             .value
                                                         as Map<dynamic,
                                                             dynamic>;
-                                                List<TableRow> rows = [];
-
+                                                List<TableRow> rows = [];     
                                                 // Add header row
                                                 rows.add(
                                                   TableRow(
@@ -786,7 +793,30 @@ class _MyCameraState extends State<MyCamera> {
                                                 return Table(
                                                   border: TableBorder.all(
                                                       color: gradient2Color),
-                                                  children: rows,
+                                                  children: [
+                                                    TableRow(children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        child: Text(
+                                                          '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}',
+                                                          style: TextStyle(
+                                                            color:
+                                                                gradient2Color,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ]),
+                                                    TableRow(children: [
+                                                      Table(
+                                                        border: TableBorder.all(
+                                                          color: gradient2Color),
+                                                        children:  rows,)
+                                                    ])
+                                                  ],
                                                 );
                                               } else if (snapshot.hasError) {
                                                 return Center(
