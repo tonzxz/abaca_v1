@@ -73,7 +73,7 @@ class _MyCameraState extends State<MyCamera> {
     setState(() {
       _onFlickerFrame = true;
     });
-    _flickerTimer = Timer(Duration(milliseconds: 3000), () async{
+    _flickerTimer = Timer(const Duration(milliseconds: 1500), () async{
       setState(() {
         _onFlickerFrame = false;
         _lastPrediction = prediction;
@@ -341,15 +341,6 @@ class _MyCameraState extends State<MyCamera> {
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
 
-    List<String> getLabels(List<dynamic> recognitions) {
-      List<String> labels = [];
-      for (var recognition in recognitions) {
-        if (recognition != null && recognition['label'] != null) {
-          labels.add(recognition['label']);
-        }
-      }
-      return labels;
-    }
 
     var recognitions = await Tflite.runModelOnImage(
       path: preprocessed.path, // required
@@ -361,7 +352,15 @@ class _MyCameraState extends State<MyCamera> {
     List<String> labels = [];
     bool resultMatches = true; // Initialize resultMatches here
     if (recognitions != null && recognitions.isNotEmpty) {
-      labels.add(recognitions[0]['label']);
+      print(recognitions[0]);
+      // if confidence is > 0.5 , image has a abaca
+      if(recognitions[0]['confidence'] > 0.65){
+
+          labels.add(recognitions[0]['label']);
+
+      }
+
+      
     }
     // for (var recognition in recognitions!) {
     //   if (recognition != null && recognition['label'] != null) {
@@ -1017,6 +1016,9 @@ class _MyCameraState extends State<MyCamera> {
                         Timer.periodic(const Duration(seconds: 1), (timer) {
                       if (shouldStartMatching) {
                         // Only take picture and start matching if shouldStartMatching is true
+                        setState(() {
+                          _recognition = null;
+                        });
                         _takePicture(
                           context,
                         );
