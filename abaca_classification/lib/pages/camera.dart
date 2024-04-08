@@ -41,7 +41,7 @@ class _MyCameraState extends State<MyCamera> {
   Timer? _timer;
   String? _lastPrediction;
   bool _onFlickerFrame = false;
-  Timer? _flickerTimer ;
+  Timer? _flickerTimer;
 
   @override
   void dispose() {
@@ -69,17 +69,16 @@ class _MyCameraState extends State<MyCamera> {
     await Tflite.close();
   }
 
-  enterFlickerFrame(String? prediction) async{
+  enterFlickerFrame(String? prediction) async {
     setState(() {
       _onFlickerFrame = true;
     });
-    _flickerTimer = Timer(const Duration(milliseconds: 1500), () async{
+    _flickerTimer = Timer(const Duration(milliseconds: 1500), () async {
       setState(() {
         _onFlickerFrame = false;
         _lastPrediction = prediction;
-        
       });
-       if (prediction != null) {
+      if (prediction != null) {
         try {
           // skip if no changes in prediction, or on flicker frame
           // Get date today
@@ -293,13 +292,13 @@ class _MyCameraState extends State<MyCamera> {
       // bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
       // bool isCloseToBlack = false;
       var prediction = await _classifyImage(File(imagePath));
-      if(prediction != _lastPrediction){
+      if (prediction != _lastPrediction) {
         // check if app is on flicker frame
-        if(!_onFlickerFrame){
+        if (!_onFlickerFrame) {
           // if not on flicker frame, start another flicker fame and pass prediction
           enterFlickerFrame(prediction);
         }
-      }else{
+      } else {
         // cancel any changes comming from flicker frame
         setState(() {
           _onFlickerFrame = false;
@@ -308,12 +307,10 @@ class _MyCameraState extends State<MyCamera> {
       }
       setState(() {
         // if (!isCloseToBlack) {
-          _recognition = _lastPrediction;
+        _recognition = _lastPrediction;
         // }
         _image = File(imagePath);
       });
-
-
     } catch (e) {
       print(e);
     }
@@ -341,7 +338,6 @@ class _MyCameraState extends State<MyCamera> {
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
 
-
     var recognitions = await Tflite.runModelOnImage(
       path: preprocessed.path, // required
       numResults: 1, // defaults to 5
@@ -354,13 +350,9 @@ class _MyCameraState extends State<MyCamera> {
     if (recognitions != null && recognitions.isNotEmpty) {
       print(recognitions[0]);
       // if confidence is > 0.5 , image has a abaca
-      if(recognitions[0]['confidence'] > 0.65){
-
-          labels.add(recognitions[0]['label']);
-
+      if (recognitions[0]['confidence'] > 0.65) {
+        labels.add(recognitions[0]['label']);
       }
-
-      
     }
     // for (var recognition in recognitions!) {
     //   if (recognition != null && recognition['label'] != null) {
@@ -371,8 +363,8 @@ class _MyCameraState extends State<MyCamera> {
     // // Check if all elements in abacaGrades are present in labels and vice versa
     // resultMatches = abacaGrades.toSet().containsAll(labels.toSet()) &&
     //     labels.toSet().containsAll(abacaGrades.toSet());
-    
-    return  labels.isNotEmpty ? labels[0] : null;
+
+    return labels.isNotEmpty ? labels[0] : null;
   }
 
   @override
@@ -714,7 +706,7 @@ class _MyCameraState extends State<MyCamera> {
                                                             .value
                                                         as Map<dynamic,
                                                             dynamic>;
-                                                List<TableRow> rows = [];     
+                                                List<TableRow> rows = [];
                                                 // Add header row
                                                 rows.add(
                                                   TableRow(
@@ -812,8 +804,10 @@ class _MyCameraState extends State<MyCamera> {
                                                     TableRow(children: [
                                                       Table(
                                                         border: TableBorder.all(
-                                                          color: gradient2Color),
-                                                        children:  rows,)
+                                                            color:
+                                                                gradient2Color),
+                                                        children: rows,
+                                                      )
                                                     ])
                                                   ],
                                                 );
@@ -857,6 +851,24 @@ class _MyCameraState extends State<MyCamera> {
                                                     // Add a new page to the document
                                                     PdfPage page =
                                                         document.pages.add();
+
+                                                    document.pages
+                                                        .add()
+                                                        .graphics
+                                                        .drawString(
+                                                            'Hello World!!!',
+                                                            PdfStandardFont(
+                                                                PdfFontFamily
+                                                                    .helvetica,
+                                                                20),
+                                                            brush: PdfBrushes
+                                                                .black,
+                                                            bounds:
+                                                                Rect.fromLTWH(
+                                                                    10,
+                                                                    10,
+                                                                    300,
+                                                                    50));
 
                                                     // Create a PdfGrid
                                                     PdfGrid grid = PdfGrid();

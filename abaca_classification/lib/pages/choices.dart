@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:abaca_classification/pages/about.dart';
 import 'package:abaca_classification/pages/camera.dart';
 import 'package:abaca_classification/theme/styles.dart';
 import 'package:abaca_classification/pages/grades.dart';
@@ -55,7 +56,7 @@ class _MyChoicesState extends State<MyChoices> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => const MyGrades(),
+                        builder: (context) => AbacaFiberGradesScreen(),
                       ),
                     );
                   },

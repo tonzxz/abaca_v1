@@ -80,16 +80,20 @@ flutter:
   #   - images/a_dot_ham.jpeg'
 
   assets:
+    - assets/images/EF.jpg
+    - assets/images/G.jpg
+    - assets/images/H.jpg
+    - assets/images/I.jpg
+    - assets/images/JK.jpg
+    - assets/images/M1.jpg
+    - assets/images/S2.jpg
+    - assets/images/S3.jpg
     - assets/images/abacalogo.png
     - assets/model/model.tflite
     - assets/model/label.txt
     - assets/classify.mp3
     - assets/fonts/Nunito-Regular.ttf
 
-  fonts:
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 
