@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:abaca_classification/theme/styles.dart';
 
 class AbacaFiberGradesScreen extends StatefulWidget {
   const AbacaFiberGradesScreen({super.key});
@@ -13,20 +14,45 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        scrollDirection: Axis.vertical,
-        children: [
-          _buildSlide1(),
-          _buildSlide2(),
-          _buildSlide3(),
-          _buildSlide4(),
-          _buildSlide5(),
-          _buildSlide6(),
-          _buildSlide7(),
-          _buildSlide8(),
-          _buildSlide9(),
-        ],
+      body: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity! > 0) {
+            // Swiped from top to bottom (scroll down)
+            int currentPage = _pageController.page!.toInt();
+            if (currentPage < 8) {
+              _pageController.animateToPage(
+                currentPage + 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            }
+          } else if (details.primaryVelocity! < 0) {
+            // Swiped from bottom to top (scroll up)
+            int currentPage = _pageController.page!.toInt();
+            if (currentPage > 0) {
+              _pageController.animateToPage(
+                currentPage - 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            }
+          }
+        },
+        child: PageView(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          children: [
+            _buildSlide1(),
+            _buildSlide2(),
+            _buildSlide3(),
+            _buildSlide4(),
+            _buildSlide5(),
+            _buildSlide6(),
+            _buildSlide7(),
+            _buildSlide8(),
+            _buildSlide9(),
+          ],
+        ),
       ),
     );
   }
@@ -41,52 +67,97 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 40),
+                  SizedBox(height: 50),
                   Center(
                     child: Text(
-                      'NORMAL HAND-STRIPPED ABACA FIBER GRADES',
+                      'Classification of Hand-stripped Abacá Fiber Grades',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
+                        color: gradient2Color,
                       ),
                     ),
                   ),
-                  SizedBox(height: 32),
+                  // Center(
+                  //   child: Text(
+                  //     'What you need to know:',
+                  //     textAlign: TextAlign.center,
+                  //     style: TextStyle(
+                  //       fontSize: textMD,
+                  //       fontWeight: fontLG,
+                  //       color: gradient2Color,
+                  //     ),
+                  //   ),
+                  // ),
+                  SizedBox(height: 16),
                   Text(
-                    'WHAT YOU NEED TO KNOW:',
+                    'Abaca',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: fontMD,
+                      fontSize: textMD,
+                      color: gradient2Color,
                     ),
                   ),
+                  Text('- plant scientifically known as Musa Textilis nee'),
                   SizedBox(height: 8),
                   Text(
-                      '- Abaca -- plant scientifically known as Musa Textilis nee'),
-                  Text('- Abaca Fiber -- fiber extracted from the Abaca Plant'),
+                    'Abaca Fiber',
+                    style: TextStyle(
+                      fontWeight: fontMD,
+                      fontSize: textMD,
+                      color: gradient2Color,
+                    ),
+                  ),
+                  Text('- fiber extracted from the Abaca Plant'),
+                  SizedBox(height: 8),
                   Text(
-                      '- Hand-Stripped Abaca Fiber -- fiber extracted through the use of manually operated stripping apparatus (stripping knife).'),
+                    'Hand-Stripped Abaca Fiber ',
+                    style: TextStyle(
+                      fontWeight: fontMD,
+                      fontSize: textMD,
+                      color: gradient2Color,
+                    ),
+                  ),
                   Text(
-                      '- Grade -- refers to the fiber quality as designated by an alphanumeric code generally described as normal, residual and wide strips fiber.'),
+                      '- fiber extracted through the use of manually operated stripping apparatus (stripping knife).'),
+                  SizedBox(height: 8),
+                  Text(
+                    'Grade ',
+                    style: TextStyle(
+                      fontWeight: fontMD,
+                      fontSize: textMD,
+                      color: gradient2Color,
+                    ),
+                  ),
+                  Text(
+                      '- refers to the fiber quality as designated by an alphanumeric code generally described as normal, residual and wide strips fiber.'),
                   SizedBox(height: 16),
                   Text(
                     'Abaca fiber grades shall be distinguished according to factors such as:',
                     style: TextStyle(
                       fontStyle: FontStyle.italic,
+                      fontWeight: fontMD,
+                      fontSize: textSM,
+                      color: gradient2Color,
                     ),
                   ),
+                  SizedBox(height: 8),
                   Text(
-                      'a) Where it was extracted from (Inner leaf sheath, outer leaf sheath, etc)'),
-                  Text('b) Fiber strand size'),
-                  Text('c) Color'),
-                  Text('d) Stripping'),
-                  Text('d) Texture'),
+                    'a) Where it was extracted from (Inner leaf sheath, outer leaf sheath, etc)',
+                    style: TextStyle(fontWeight: fontMD),
+                  ),
+                  Text('b) Fiber strand size',
+                      style: TextStyle(fontWeight: fontMD)),
+                  Text('c) Color', style: TextStyle(fontWeight: fontMD)),
+                  Text('d) Stripping', style: TextStyle(fontWeight: fontMD)),
+                  Text('d) Texture', style: TextStyle(fontWeight: fontMD)),
                 ],
               ),
             ),
           ),
         ),
-        _buildDownButton(0),
+        _downButton(0),
       ],
     );
   }
@@ -94,11 +165,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide2() {
     return Column(
       children: [
-        _buildUpButton(1),
+        const SizedBox(height: 30),
+        _upButton(1),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -107,12 +179,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
                       '8 Normal Grades of Hand-stripped Abaca Fiber',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          fontSize: 28,
+                          fontWeight: fontXL,
+                          color: gradient2Color),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildFiberGrade(
                     gradeName: 'Mid current (EF)',
                     imagePath: 'assets/images/EF.jpg',
@@ -128,7 +200,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(1),
+        _downButton(1),
       ],
     );
   }
@@ -136,7 +208,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide3() {
     return Column(
       children: [
-        _buildUpButton(2),
+        const SizedBox(height: 30),
+        _upButton(2),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -144,6 +217,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Streaky Two (S2)',
                     imagePath: 'assets/images/S2.jpg',
@@ -159,7 +233,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(2),
+        _downButton(2),
       ],
     );
   }
@@ -167,7 +241,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide4() {
     return Column(
       children: [
-        _buildUpButton(3),
+        const SizedBox(height: 30),
+        _upButton(3),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -175,6 +250,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Streaky Three (S3)',
                     imagePath: 'assets/images/S3.jpg',
@@ -190,7 +266,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(3),
+        _downButton(3),
       ],
     );
   }
@@ -198,7 +274,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide5() {
     return Column(
       children: [
-        _buildUpButton(4),
+        const SizedBox(height: 30),
+        _upButton(4),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -206,6 +283,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Current (I)',
                     imagePath: 'assets/images/I.jpg',
@@ -220,7 +298,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(4),
+        _downButton(4),
       ],
     );
   }
@@ -228,7 +306,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide6() {
     return Column(
       children: [
-        _buildUpButton(5),
+        const SizedBox(height: 30),
+        _upButton(5),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -236,6 +315,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Soft Seconds (G)',
                     imagePath: 'assets/images/G.jpg',
@@ -251,7 +331,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(5),
+        _downButton(5),
       ],
     );
   }
@@ -259,7 +339,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide7() {
     return Column(
       children: [
-        _buildUpButton(6),
+        const SizedBox(height: 30),
+        _upButton(6),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -267,6 +348,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Soft Brown (H)',
                     imagePath: 'assets/images/H.jpg',
@@ -281,7 +363,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(6),
+        _downButton(6),
       ],
     );
   }
@@ -289,7 +371,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide8() {
     return Column(
       children: [
-        _buildUpButton(7),
+        const SizedBox(height: 30),
+        _upButton(7),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -297,6 +380,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Seconds (JK)',
                     imagePath: 'assets/images/JK.jpg',
@@ -313,7 +397,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(7),
+        _downButton(7),
       ],
     );
   }
@@ -321,7 +405,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide9() {
     return Column(
       children: [
-        _buildUpButton(8),
+        const SizedBox(height: 30),
+        _upButton(7),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -359,19 +444,22 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _buildDownButton(8),
+        _backToStartButton(1),
       ],
     );
   }
 
-  Widget _buildUpButton(int currentIndex) {
+  Widget _upButton(int currentIndex) {
     return IconButton(
-      icon: Icon(Icons.arrow_upward),
+      icon: const Icon(
+        Icons.arrow_upward,
+        color: gradient2Color,
+      ),
       onPressed: currentIndex > 0
           ? () {
               _pageController.animateToPage(
                 currentIndex - 1,
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
               );
             }
@@ -379,14 +467,35 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
     );
   }
 
-  Widget _buildDownButton(int currentIndex) {
+  Widget _backToStartButton(int currentIndex) {
     return IconButton(
-      icon: Icon(Icons.arrow_downward),
+      icon: const Icon(
+        Icons.keyboard_double_arrow_up_sharp,
+        color: gradient2Color,
+      ),
+      onPressed: currentIndex > 0
+          ? () {
+              _pageController.animateToPage(
+                currentIndex - 1,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            }
+          : null,
+    );
+  }
+
+  Widget _downButton(int currentIndex) {
+    return IconButton(
+      icon: const Icon(
+        Icons.arrow_downward,
+        color: gradient2Color,
+      ),
       onPressed: currentIndex < 8
           ? () {
               _pageController.animateToPage(
                 currentIndex + 1,
-                duration: Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
               );
             }
@@ -403,32 +512,156 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
     required String stripping,
     required String texture,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Text(
-            gradeName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              gradeName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: gradient2Color,
+                fontSize: textMD,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: Image.asset(
-            imagePath,
-            width: 400,
-            height: 400,
+          const SizedBox(height: 16),
+          Center(
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text('Extracted from: $extractedFrom'),
-        Text('Strand Size: $strandSize'),
-        Text('Color: $color'),
-        Text('Stripping: $stripping'),
-        Text('Texture: $texture'),
-      ],
+          const SizedBox(height: 16),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Extracted from: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: extractedFrom,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Strand Size: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: strandSize,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Color: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: color,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Stripping: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: stripping,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Texture: ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+                TextSpan(
+                  text: texture,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
+      ),
     );
   }
 }
