@@ -326,6 +326,7 @@ class _MyCameraState extends State<MyCamera> {
     return File(croppedImage.path);
   }
 
+
   Future _classifyImage(File file) async {
     List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
