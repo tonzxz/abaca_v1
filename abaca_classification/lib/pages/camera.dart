@@ -334,7 +334,7 @@ class _MyCameraState extends State<MyCamera> {
     var reduced = img.copyResize(image,
         width: IMAGE_SIZE[0],
         height: IMAGE_SIZE[1],
-        interpolation: img.Interpolation.nearest);
+        interpolation: img.Interpolation.linear);
 
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
@@ -352,7 +352,7 @@ class _MyCameraState extends State<MyCamera> {
     if (recognitions != null && recognitions.isNotEmpty) {
       print(recognitions[0]);
       // if confidence is > 0.5 , image has a abaca
-      if (recognitions[0]['confidence'] > 0.65) {
+      if (recognitions[0]['confidence'] > 0.50) {
         labels.add(recognitions[0]['label']);
       }
     }
