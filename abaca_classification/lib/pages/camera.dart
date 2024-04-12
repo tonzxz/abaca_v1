@@ -308,7 +308,7 @@ class _MyCameraState extends State<MyCamera> {
       }
       setState(() {
         // if (!isCloseToBlack) {
-        _recognition = prediction;
+        _recognition = _lastPrediction;
         // }
         _image = File(imagePath);
       });
