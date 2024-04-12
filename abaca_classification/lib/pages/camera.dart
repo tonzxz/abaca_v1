@@ -308,7 +308,7 @@ class _MyCameraState extends State<MyCamera> {
       }
       setState(() {
         // if (!isCloseToBlack) {
-        _recognition = _lastPrediction;
+        _recognition = prediction;
         // }
         _image = File(imagePath);
       });
@@ -1737,13 +1737,14 @@ class _MyCameraState extends State<MyCamera> {
                         _continuousCapture; // Update shouldStartMatching
                   });
                   if (_continuousCapture) {
+                        setState(() {
+                          _recognition = null;
+                        });
                     _timer =
                         Timer.periodic(const Duration(seconds: 1), (timer) {
                       if (shouldStartMatching) {
                         // Only take picture and start matching if shouldStartMatching is true
-                        setState(() {
-                          _recognition = null;
-                        });
+    
                         _takePicture(
                           context,
                         );
