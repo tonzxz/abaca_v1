@@ -414,7 +414,7 @@ double computeVariance(img.Image image) {
     if (recognitions != null && recognitions.isNotEmpty) {
       print(recognitions[0]);
       // if confidence level is more than 60%
-      if (recognitions[0]['confidence'] > 0.45) {
+      if (recognitions[0]['confidence'] > 0.6) {
         labels.add(recognitions[0]['label']);
       }
     }
