@@ -970,8 +970,7 @@ double computeVariance(img.Image image) {
                                       Padding(
                                         padding: const EdgeInsets.fromLTRB(
                                             16, 8, 16, 32),
-                                        child: Flexible(
-                                          child: StreamBuilder<DatabaseEvent>(
+                                        child: StreamBuilder<DatabaseEvent>(
                                             stream: _databaseReference.onValue,
                                             builder: (BuildContext context,
                                                 AsyncSnapshot<DatabaseEvent>
@@ -1071,7 +1070,6 @@ double computeVariance(img.Image image) {
                                                 );
                                               }
                                             },
-                                          ),
                                         ),
                                       ),
                                       // pdf button download
@@ -1080,8 +1078,7 @@ double computeVariance(img.Image image) {
                                       Padding(
                                         padding: const EdgeInsets.fromLTRB(
                                             18, 0, 18, 24),
-                                        child: Flexible(
-                                          child: StreamBuilder<DatabaseEvent>(
+                                        child: StreamBuilder<DatabaseEvent>(
                                             stream: _databaseReference.onValue,
                                             builder: (BuildContext context,
                                                 AsyncSnapshot<DatabaseEvent>
@@ -1728,7 +1725,6 @@ double computeVariance(img.Image image) {
                                                 return Container();
                                               }
                                             },
-                                          ),
                                         ),
                                       ),
                                     ],

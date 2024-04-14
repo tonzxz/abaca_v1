@@ -263,8 +263,7 @@ class _PrintingPageState extends State<PrintingPage> {
 
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0, 8, 0, 40),
-                          child: Flexible(
-                            child: StreamBuilder<DatabaseEvent>(
+                          child:  StreamBuilder<DatabaseEvent>(
                               stream: _databaseReference.onValue,
                               builder: (BuildContext context,
                                   AsyncSnapshot<DatabaseEvent> snapshot) {
@@ -338,7 +337,6 @@ class _PrintingPageState extends State<PrintingPage> {
                                   );
                                 }
                               },
-                            ),
                           ),
                         ),
                         // pdf button download
@@ -346,8 +344,7 @@ class _PrintingPageState extends State<PrintingPage> {
                         // Download PDF button
                         Padding(
                           padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
-                          child: Flexible(
-                            child: StreamBuilder<DatabaseEvent>(
+                          child: StreamBuilder<DatabaseEvent>(
                               stream: _databaseReference.onValue,
                               builder: (BuildContext context,
                                   AsyncSnapshot<DatabaseEvent> snapshot) {
@@ -819,7 +816,6 @@ class _PrintingPageState extends State<PrintingPage> {
                                   return Container();
                                 }
                               },
-                            ),
                           ),
                         ),
                       ],
