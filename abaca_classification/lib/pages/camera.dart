@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,8 +41,7 @@ class _MyCameraState extends State<MyCamera> {
   String? _recognition;
   Timer? _timer;
   String? _lastPrediction;
-  bool _onFlickerFrame = false;
-  Timer? _flickerTimer;
+  final PredictionCache predictionCache = PredictionCache(5);
 
   @override
   void dispose() {
@@ -67,69 +67,6 @@ class _MyCameraState extends State<MyCamera> {
 
   closerModel() async {
     await Tflite.close();
-  }
-
-  enterFlickerFrame(String? prediction) async {
-    setState(() {
-      _onFlickerFrame = true;
-    });
-    _flickerTimer = Timer(const Duration(milliseconds: 1500), () async {
-      setState(() {
-        _onFlickerFrame = false;
-        _lastPrediction = prediction;
-      });
-      if (prediction != null) {
-        try {
-          // skip if no changes in prediction, or on flicker frame
-          // Get date today
-          String today =
-              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}'; // 4-4-2024
-          DatabaseReference todayRef =
-              FirebaseDatabase.instance.reference().child(today);
-          DatabaseEvent eventToday = await todayRef.once();
-          if (eventToday.snapshot.value != null) {
-            //  If has today
-            DatabaseEvent event = await todayRef.child(prediction).once();
-            DataSnapshot snapshot = event.snapshot;
-
-            if (snapshot.value != null) {
-              // If the grade exists, increment its count
-              int count = snapshot.value as int;
-              await todayRef.child(prediction).set(count + 1);
-              final player = AudioPlayer();
-              player.play(AssetSource('classify.mp3'));
-            } else {
-              // If the grade doesn't exist, set its count to 1
-              await todayRef.child(prediction).set(1);
-            }
-          } else {
-            // If no today
-            DatabaseEvent event = await todayRef.child(prediction).once();
-            DataSnapshot snapshot = event.snapshot;
-
-            if (snapshot.value != null) {
-              // If the grade exists, increment its count
-              int count = snapshot.value as int;
-              await todayRef.child(prediction).set(count + 1);
-              final player = AudioPlayer();
-              player.play(AssetSource('classify.mp3'));
-            } else {
-              // If the grade doesn't exist, set its count to 1
-              await todayRef.child(prediction).set(1);
-            }
-          }
-
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(
-          //     content: Text(_recognition!.replaceAll(RegExp(r'\[|\]'), '')),
-          //     duration: const Duration(seconds: 1),
-          //   ),
-          // );
-        } catch (e) {
-          print('Error saving to database: $e');
-        }
-      }
-    });
   }
 
   Future loadModel() async {
@@ -289,26 +226,77 @@ class _MyCameraState extends State<MyCamera> {
       final imagePath = '${takenDirectory.path}/captured.png';
       await File(image!.path).copy(imagePath);
 
-      // var averageColor = await getAverageColor(File(imagePath));
-      // bool isCloseToBlack = averageColor.computeLuminance() < 0.2;
-      // bool isCloseToBlack = false;
+      var averageColor = await getAverageColor(File(imagePath));
+      HSVColor hsvColor = HSVColor.fromColor(averageColor);
+      print({"type": "Average Color Saturation", "value":hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
-      if (prediction != _lastPrediction) {
-        // check if app is on flicker frame
-        if (!_onFlickerFrame) {
-          // if not on flicker frame, start another flicker fame and pass prediction
-          enterFlickerFrame(prediction);
+      if(hsvColor.saturation > 0.12){
+        if(prediction != null){
+          predictionCache.addPrediction(prediction);
+        }else{
+          predictionCache.addPrediction("X");
         }
-      } else {
-        // cancel any changes comming from flicker frame
-        setState(() {
-          _onFlickerFrame = false;
-          _flickerTimer?.cancel();
-        });
+        
+      }else{
+        // no abaca, change to null
+        predictionCache.resetPredictions();
+      }
+      prediction = predictionCache.getMajorityPrediction() != "X" ? predictionCache.getMajorityPrediction() : null ;
+      if (prediction != _lastPrediction) {
+        _lastPrediction = prediction;
+        try {
+          // skip if no changes in prediction, or on flicker frame
+          // Get date today
+          String today =
+              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}'; // 4-4-2024
+          DatabaseReference todayRef =
+              FirebaseDatabase.instance.reference().child(today);
+          DatabaseEvent eventToday = await todayRef.once();
+          if (eventToday.snapshot.value != null) {
+            //  If has today
+            DatabaseEvent event = await todayRef.child(prediction).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(prediction).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(prediction).set(1);
+            }
+          } else {
+            // If no today
+            DatabaseEvent event = await todayRef.child(prediction).once();
+            DataSnapshot snapshot = event.snapshot;
+
+            if (snapshot.value != null) {
+              // If the grade exists, increment its count
+              int count = snapshot.value as int;
+              await todayRef.child(prediction).set(count + 1);
+              final player = AudioPlayer();
+              player.play(AssetSource('classify.mp3'));
+            } else {
+              // If the grade doesn't exist, set its count to 1
+              await todayRef.child(prediction).set(1);
+            }
+          }
+
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(_recognition!.replaceAll(RegExp(r'\[|\]'), '')),
+          //     duration: const Duration(seconds: 1),
+          //   ),
+          // );
+        } catch (e) {
+          print('Error saving to database: $e');
+        }
       }
       setState(() {
         // if (!isCloseToBlack) {
-        _recognition = _lastPrediction;
+        _recognition = prediction;
         // }
         _image = File(imagePath);
       });
@@ -324,6 +312,22 @@ class _MyCameraState extends State<MyCamera> {
     return File(croppedImage.path);
   }
 
+  Uint8List imageToByteListFloat32(
+    img.Image image, int inputSize, double mean, double std) {
+  var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+  var buffer = Float32List.view(convertedBytes.buffer);
+  int pixelIndex = 0;
+  for (var i = 0; i < inputSize; i++) {
+    for (var j = 0; j < inputSize; j++) {
+      var pixel = image.getPixel(j, i);
+      buffer[pixelIndex++] = (img.getRed(pixel) / mean) - std;
+      buffer[pixelIndex++] = (img.getGreen(pixel) / mean) - std;
+      buffer[pixelIndex++] = (img.getBlue(pixel) / mean) - std;
+    }
+  }
+  return convertedBytes.buffer.asUint8List();
+}
+
 
   Future _classifyImage(File file) async {
     List<int> IMAGE_SIZE = [224, 224];
@@ -331,7 +335,7 @@ class _MyCameraState extends State<MyCamera> {
 
     image = img.flipVertical(image!);
 
-    var reduced = img.copyResize(image,
+    var reduced = img.copyResize(image!,
         width: IMAGE_SIZE[0],
         height: IMAGE_SIZE[1],
         interpolation: img.Interpolation.linear);
@@ -340,32 +344,25 @@ class _MyCameraState extends State<MyCamera> {
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
 
-    var recognitions = await Tflite.runModelOnImage(
+    var recognitions = await Tflite.runModelOnImage( 
       path: preprocessed.path, // required
+      imageMean: 0.0, // optional: set the image mean for normalization
+      imageStd: 1,
       numResults: 1, // defaults to 5
       threshold: 0.2, // defaults to 0.1
       asynch: true, // defaults to true
     );
 
+
     List<String> labels = [];
     bool resultMatches = true; // Initialize resultMatches here
     if (recognitions != null && recognitions.isNotEmpty) {
       print(recognitions[0]);
-      // if confidence is > 0.5 , image has a abaca
-      if (recognitions[0]['confidence'] > 0.50) {
+      // if confidence level is more than 60%
+      if (recognitions[0]['confidence'] > 0.45) {
         labels.add(recognitions[0]['label']);
       }
     }
-    // for (var recognition in recognitions!) {
-    //   if (recognition != null && recognition['label'] != null) {
-    //     labels.add(recognition['label']);
-    //   }
-    // }
-
-    // // Check if all elements in abacaGrades are present in labels and vice versa
-    // resultMatches = abacaGrades.toSet().containsAll(labels.toSet()) &&
-    //     labels.toSet().containsAll(abacaGrades.toSet());
-
     return labels.isNotEmpty ? labels[0] : null;
   }
 
@@ -415,8 +412,8 @@ class _MyCameraState extends State<MyCamera> {
                       children: [
                         Positioned(
                           left: 10,
-                          top: 180,
-                          bottom: 200,
+                          top: 170,
+                          bottom: 180,
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -426,12 +423,12 @@ class _MyCameraState extends State<MyCamera> {
                               ),
                               borderRadius: BorderRadius.circular(20.0),
                             ),
-                            child: const Column(
+                            child: const  Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 SizedBox(
                                   width: 45.0,
-                                  height: 360.0,
+                                  height: 100,
                                 ),
                               ],
                             ),
@@ -439,70 +436,72 @@ class _MyCameraState extends State<MyCamera> {
                         ),
                         Positioned(
                           left: 10,
-                          top: 180,
-                          bottom: 200,
+                          top: 170,
+                          bottom: 160,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: List.generate(
                               abacaGrades.length,
-                              (index) => SizedBox(
-                                width: 45.0,
-                                height: 45.0,
-                                child: ElevatedButton(
-                                  onPressed: () => handleClick(index),
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(200.0),
-                                    ),
-                                    padding: const EdgeInsets.all(0),
-                                    elevation: shouldStartMatching
-                                        ? abacaGrades[index] == _recognition
-                                            ? 1
-                                            : 0
-                                        : 0,
-                                  ),
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: shouldStartMatching
+                              (index) => Flexible(
+                                child: SizedBox(
+                                    width: 45.0,
+                                    height: 45.0,
+                                    child: ElevatedButton(
+                                      onPressed: () => handleClick(index),
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(200.0),
+                                        ),
+                                        padding: const EdgeInsets.all(0),
+                                        elevation: shouldStartMatching
                                             ? abacaGrades[index] == _recognition
-                                                ? [
-                                                    gradient1Color,
-                                                    gradient1Color
-                                                  ]
-                                                : [
-                                                    gradient2Color,
-                                                    gradient2Color
-                                                  ]
-                                            : [gradient2Color, gradient2Color],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.center,
+                                                ? 1
+                                                : 0
+                                            : 0,
                                       ),
-                                      borderRadius: BorderRadius.circular(80.0),
-                                    ),
-                                    child: Container(
-                                      constraints: const BoxConstraints(
-                                        minWidth: 20.0,
-                                        minHeight: 20.0,
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        abacaGrades[index],
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 16.0,
-                                          color: shouldStartMatching
-                                              ? abacaGrades[index] ==
-                                                      _recognition
-                                                  ? gradient2Color
-                                                  : Colors.white.withOpacity(.5)
-                                              : Colors.white.withOpacity(.5),
+                                      child: Ink(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: shouldStartMatching
+                                                ? abacaGrades[index] == _recognition
+                                                    ? [
+                                                        gradient1Color,
+                                                        gradient1Color
+                                                      ]
+                                                    : [
+                                                        gradient2Color,
+                                                        gradient2Color
+                                                      ]
+                                                : [gradient2Color, gradient2Color],
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.center,
+                                          ),
+                                          borderRadius: BorderRadius.circular(80.0),
+                                        ),
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 20.0,
+                                            minHeight: 20.0,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            abacaGrades[index],
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 16.0,
+                                              color: shouldStartMatching
+                                                  ? abacaGrades[index] ==
+                                                          _recognition
+                                                      ? gradient2Color
+                                                      : Colors.white.withOpacity(.5)
+                                                  : Colors.white.withOpacity(.5),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
                               ),
                             ),
                           ),
@@ -1776,5 +1775,51 @@ class _MyCameraState extends State<MyCamera> {
         ],
       ),
     );
+  }
+}
+
+class PredictionCache {
+  final int maxCache;
+  List<String> lastPredictions = [];
+
+  PredictionCache(this.maxCache);
+
+  void addPrediction(String prediction) {
+    lastPredictions.add(prediction);
+    if (lastPredictions.length > maxCache) {
+      lastPredictions.removeAt(0); // Remove the oldest prediction
+    }
+  }
+
+  void resetPredictions(){
+    lastPredictions = [];
+  }
+
+  String? getMajorityPrediction() {
+    if (lastPredictions.isEmpty) {
+      return null; // No predictions yet
+    }
+
+    if(lastPredictions.length < 2){
+      return null;
+    }
+
+    // Count occurrences of each prediction
+    Map<String, int> predictionCounts = {};
+    lastPredictions.forEach((prediction) {
+      predictionCounts[prediction] = (predictionCounts[prediction] ?? 0) + 1;
+    });
+
+    // Find the prediction with the highest count
+    String? majorityPrediction;
+    int maxCount = 0;
+    predictionCounts.forEach((prediction, count) {
+      if (count > maxCount) {
+        majorityPrediction = prediction;
+        maxCount = count;
+      }
+    });
+
+    return majorityPrediction;
   }
 }
