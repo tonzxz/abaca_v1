@@ -230,7 +230,7 @@ class _MyCameraState extends State<MyCamera> {
       HSVColor hsvColor = HSVColor.fromColor(averageColor);
       print({"type": "Average Color Saturation", "value":hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
-      if(hsvColor.saturation > 0.12){
+      if(hsvColor.saturation > 0.10){
         if(prediction != null){
           predictionCache.addPrediction(prediction);
         }else{
@@ -327,6 +327,59 @@ class _MyCameraState extends State<MyCamera> {
   }
   return convertedBytes.buffer.asUint8List();
 }
+  bool isImageBlurred(img.Image image) {
+  // Convert the image to grayscale
+  img.Image grayscaleImage = img.grayscale(image);
+
+  // Compute the variance of the Laplacian
+  double laplacianVariance = computeLaplacianVariance(grayscaleImage);
+  
+  print(laplacianVariance);
+  // Define a threshold to determine blur
+  double blurThreshold = 2500.0; // You can adjust this threshold
+
+  // Check if the variance is below the threshold
+  return laplacianVariance < blurThreshold;
+}
+
+double computeLaplacianVariance(img.Image image) {
+  // Apply Laplacian filter to the image
+  img.Image filteredImage = img.convolution(image, [
+    0, 1, 0,
+    1, -4, 1,
+    0, 1, 0
+  ]);
+
+  // Compute the variance of the filtered image
+  double variance = computeVariance(filteredImage);
+
+  return variance;
+}
+double computeVariance(img.Image image) {
+  // Calculate the mean intensity
+  double sum = 0;
+  for (int y = 0; y < image.height; y++) {
+    for (int x = 0; x < image.width; x++) {
+      int pixel = image.getPixel(x, y);
+      int intensity = img.getRed(pixel); // Assuming grayscale image
+      sum += intensity;
+    }
+  }
+  double mean = sum / (image.width * image.height);
+
+  // Calculate the variance
+  double variance = 0;
+  for (int y = 0; y < image.height; y++) {
+    for (int x = 0; x < image.width; x++) {
+      int pixel = image.getPixel(x, y);
+      int intensity = img.getRed(pixel); // Assuming grayscale image
+      variance += (intensity - mean) * (intensity - mean);
+    }
+  }
+  variance /= (image.width * image.height);
+
+  return variance;
+}
 
 
   Future _classifyImage(File file) async {
@@ -344,6 +397,10 @@ class _MyCameraState extends State<MyCamera> {
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
+    // detect if image is blurred
+    if(isImageBlurred(reduced)){
+      return null;
+    }
 
     var recognitions = await Tflite.runModelOnImage( 
       path: preprocessed.path, // required
