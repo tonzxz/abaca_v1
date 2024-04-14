@@ -230,17 +230,23 @@ class _MyCameraState extends State<MyCamera> {
       HSVColor hsvColor = HSVColor.fromColor(averageColor);
       print({"type": "Average Color Saturation", "value":hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
+
+   
       if(hsvColor.saturation > 0.10){
-        if(prediction != null){
-          predictionCache.addPrediction(prediction);
-        }else{
-          predictionCache.addPrediction("X");
+        // check if not blurred
+        if(prediction!='B'){
+          if(prediction != null){
+            predictionCache.addPrediction(prediction);
+          }else{
+            predictionCache.addPrediction("X");
+          }
         }
         
       }else{
         // no abaca, change to null
         predictionCache.resetPredictions();
       }
+  
       prediction = predictionCache.getMajorityPrediction() != "X" ? predictionCache.getMajorityPrediction() : null ;
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
@@ -399,7 +405,7 @@ double computeVariance(img.Image image) {
     preprocessed.writeAsBytesSync(jpg);
     // detect if image is blurred
     if(isImageBlurred(reduced)){
-      return null;
+      return 'B';
     }
 
     var recognitions = await Tflite.runModelOnImage( 
