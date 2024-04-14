@@ -41,7 +41,7 @@ class _MyCameraState extends State<MyCamera> {
   String? _recognition;
   Timer? _timer;
   String? _lastPrediction;
-  final PredictionCache predictionCache = PredictionCache(4);
+  final PredictionCache predictionCache = PredictionCache(3);
 
   @override
   void dispose() {
@@ -230,21 +230,18 @@ class _MyCameraState extends State<MyCamera> {
       HSVColor hsvColor = HSVColor.fromColor(averageColor);
       print({"type": "Average Color Saturation", "value":hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
-
-   
-      if(hsvColor.saturation > 0.10){
-        // check if not blurred
-        if(prediction!='B'){
+      
+       // check if not blurred
+      if(prediction!='B'){
           if(prediction != null){
             predictionCache.addPrediction(prediction);
           }else{
             predictionCache.addPrediction("X");
           }
         }
-        
-      }else{
-        // no abaca, change to null
-        predictionCache.resetPredictions();
+      // Check if does not have abaca
+      if(prediction=='NA'){
+        predictionCache.resetPredictions(); 
       }
   
       prediction = predictionCache.getMajorityPrediction() != "X" ? predictionCache.getMajorityPrediction() : null ;
@@ -333,20 +330,6 @@ class _MyCameraState extends State<MyCamera> {
   }
   return convertedBytes.buffer.asUint8List();
 }
-  bool isImageBlurred(img.Image image) {
-  // Convert the image to grayscale
-  img.Image grayscaleImage = img.grayscale(image);
-
-  // Compute the variance of the Laplacian
-  double laplacianVariance = computeLaplacianVariance(grayscaleImage);
-  
-  print(laplacianVariance);
-  // Define a threshold to determine blur
-  double blurThreshold = 2500.0; // You can adjust this threshold
-
-  // Check if the variance is below the threshold
-  return laplacianVariance < blurThreshold;
-}
 
 double computeLaplacianVariance(img.Image image) {
   // Apply Laplacian filter to the image
@@ -403,8 +386,16 @@ double computeVariance(img.Image image) {
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
-    // detect if image is blurred
-    if(isImageBlurred(reduced)){
+    img.Image grayscaleImage = img.grayscale(reduced);
+    double laplacianVariance = computeLaplacianVariance(grayscaleImage);
+    print({"Laplacian Variance": laplacianVariance});
+    // detect if image contains sharp strands of abaca fiber
+    if(laplacianVariance < 1000){
+      // image does not contain enough strands to increase image sharpness
+      return 'NA'; // Not Abaca
+    }
+    if(laplacianVariance < 1500){
+      // Image contains abaca but strands are smeared to be clasified
       return 'B';
     }
 
@@ -1801,7 +1792,7 @@ double computeVariance(img.Image image) {
                           _recognition = null;
                         });
                     _timer =
-                        Timer.periodic(const Duration(seconds: 1), (timer) {
+                        Timer.periodic(const Duration(milliseconds: 200), (timer) {
                       if (shouldStartMatching) {
                         // Only take picture and start matching if shouldStartMatching is true
     
@@ -1861,9 +1852,9 @@ class PredictionCache {
       return null; // No predictions yet
     }
 
-    if(lastPredictions.length < 2){
-      return null;
-    }
+    // if(lastPredictions.length < 2){
+    //   return null;
+    // }
 
     // Count occurrences of each prediction
     Map<String, int> predictionCounts = {};
