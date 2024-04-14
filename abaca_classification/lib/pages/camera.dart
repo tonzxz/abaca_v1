@@ -41,7 +41,7 @@ class _MyCameraState extends State<MyCamera> {
   String? _recognition;
   Timer? _timer;
   String? _lastPrediction;
-  final PredictionCache predictionCache = PredictionCache(5);
+  final PredictionCache predictionCache = PredictionCache(4);
 
   @override
   void dispose() {
@@ -1737,6 +1737,7 @@ class _MyCameraState extends State<MyCamera> {
                         _continuousCapture; // Update shouldStartMatching
                   });
                   if (_continuousCapture) {
+                     predictionCache.resetPredictions();
                         setState(() {
                           _recognition = null;
                         });
