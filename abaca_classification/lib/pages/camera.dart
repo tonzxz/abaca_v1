@@ -333,7 +333,8 @@ class _MyCameraState extends State<MyCamera> {
     List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
 
-    image = img.flipVertical(image!);
+    // image = img.flipVertical(image!);
+    // image = img.copyRotate(image!,90);
 
     var reduced = img.copyResize(image!,
         width: IMAGE_SIZE[0],
