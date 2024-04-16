@@ -327,6 +327,7 @@ class _MyCameraState extends State<MyCamera> {
     _confidenceHidden = false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration : Duration(days:1),
         backgroundColor: Colors.transparent,
         content: Center(
           child: Text(
