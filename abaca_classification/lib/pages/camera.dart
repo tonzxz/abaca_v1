@@ -401,6 +401,8 @@ double computeVariance(img.Image image) {
 
     var recognitions = await Tflite.runModelOnImage( 
       path: preprocessed.path, // required
+      imageMean: 0.0,
+      imageStd: 1.0,
       numResults: 1, // defaults to 5
       threshold: 0.2, // defaults to 0.1
       asynch: true, // defaults to true
