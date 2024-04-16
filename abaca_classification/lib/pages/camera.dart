@@ -299,6 +299,9 @@ class _MyCameraState extends State<MyCamera> {
           print('Error saving to database: $e');
         }
       }
+      if(prediction == null){
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
       setState(() {
         // if (!isCloseToBlack) {
         _recognition = prediction;
@@ -316,7 +319,7 @@ class _MyCameraState extends State<MyCamera> {
         backgroundColor: Colors.transparent,
         content: Center(
           child: Text(
-            'Accuracy: ${(confidence * 100).toStringAsFixed(0)}%',
+            'Confidence: ${(confidence * 100).toStringAsFixed(0)}%',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: gradient2Color,
@@ -327,9 +330,9 @@ class _MyCameraState extends State<MyCamera> {
       ),
     );
 
-    Future.delayed(Duration(milliseconds: 500), () {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    });
+    // Future.delayed(Duration(milliseconds: 500), () {
+    //   ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    // });
   }
 
   Future<File?> _cropImage({required File imageFile}) async {
@@ -422,8 +425,8 @@ class _MyCameraState extends State<MyCamera> {
 
     var recognitions = await Tflite.runModelOnImage(
       path: preprocessed.path, // required
-      imageMean: 0.0,
-      imageStd: 1.0,
+      // imageMean: 0.0,
+      // imageStd: 1.0,
       numResults: 1, // defaults to 5
       threshold: 0.2, // defaults to 0.1
       asynch: true, // defaults to true
