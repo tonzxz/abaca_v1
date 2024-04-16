@@ -252,7 +252,7 @@ class _MyCameraState extends State<MyCamera> {
         _confidenceHidden = true;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }else{
-        if(!_confidenceHidden){
+        if(_confidenceHidden){
            showConfidenceSnackBar(context );
         }
       }
@@ -322,7 +322,7 @@ class _MyCameraState extends State<MyCamera> {
   double _confidence = 0.0;
   bool _confidenceHidden = true;
   void showConfidenceSnackBar(BuildContext context) {
-    _confidenceHidden = true;
+    _confidenceHidden = false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: Colors.transparent,
