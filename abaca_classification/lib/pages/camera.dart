@@ -238,10 +238,12 @@ class _MyCameraState extends State<MyCamera> {
         } else {
           predictionCache.addPrediction("X");
         }
+        prediction = "X";
       }
       // Check if does not have abaca
       if (prediction == 'NA') {
         predictionCache.resetPredictions();
+        prediction = "X";
       }
 
       prediction = predictionCache.getMajorityPrediction() != "X"
@@ -252,10 +254,12 @@ class _MyCameraState extends State<MyCamera> {
         _confidenceHidden = true;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }else{
-        if(_confidenceHidden){
+       if(_confidenceHidden){
            showConfidenceSnackBar(context );
         }
+
       }
+
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
         try {
