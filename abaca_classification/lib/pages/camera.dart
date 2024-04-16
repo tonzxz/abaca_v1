@@ -247,6 +247,14 @@ class _MyCameraState extends State<MyCamera> {
       prediction = predictionCache.getMajorityPrediction() != "X"
           ? predictionCache.getMajorityPrediction()
           : null;
+
+      if(prediction == null){
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }else{
+        if(_lastPrediction == null){
+          showConfidenceSnackBar(context );
+        }
+      }
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
         try {
@@ -299,13 +307,7 @@ class _MyCameraState extends State<MyCamera> {
           print('Error saving to database: $e');
         }
       }
-      if(prediction == null){
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }else{
-        if(_lastPrediction == null){
-          showConfidenceSnackBar(context );
-        }
-      }
+
       setState(() {
         // if (!isCloseToBlack) {
         _recognition = prediction;
