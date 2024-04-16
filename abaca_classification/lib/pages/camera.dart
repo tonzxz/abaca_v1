@@ -123,7 +123,7 @@ class _MyCameraState extends State<MyCamera> {
     final firstCamera = cameras.first;
     _controller = CameraController(
       firstCamera,
-      ResolutionPreset.high,
+      ResolutionPreset.veryHigh,
     );
 
     _initializeControllerFuture = _controller!.initialize().then((_) {
@@ -228,23 +228,25 @@ class _MyCameraState extends State<MyCamera> {
 
       var averageColor = await getAverageColor(File(imagePath));
       HSVColor hsvColor = HSVColor.fromColor(averageColor);
-      print({"type": "Average Color Saturation", "value":hsvColor.saturation});
+      print({"type": "Average Color Saturation", "value": hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
-      
-       // check if not blurred
-      if(prediction!='B'){
-          if(prediction != null){
-            predictionCache.addPrediction(prediction);
-          }else{
-            predictionCache.addPrediction("X");
-          }
+
+      // check if not blurred
+      if (prediction != 'B') {
+        if (prediction != null) {
+          predictionCache.addPrediction(prediction);
+        } else {
+          predictionCache.addPrediction("X");
         }
-      // Check if does not have abaca
-      if(prediction=='NA'){
-        predictionCache.resetPredictions(); 
       }
-  
-      prediction = predictionCache.getMajorityPrediction() != "X" ? predictionCache.getMajorityPrediction() : null ;
+      // Check if does not have abaca
+      if (prediction == 'NA') {
+        predictionCache.resetPredictions();
+      }
+
+      prediction = predictionCache.getMajorityPrediction() != "X"
+          ? predictionCache.getMajorityPrediction()
+          : null;
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
         try {
@@ -308,6 +310,28 @@ class _MyCameraState extends State<MyCamera> {
     }
   }
 
+  void showConfidenceSnackBar(BuildContext context, double confidence) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.transparent,
+        content: Center(
+          child: Text(
+            'Accuracy: ${(confidence * 100).toStringAsFixed(0)}%',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: gradient2Color,
+              fontWeight: fontMD,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Future.delayed(Duration(milliseconds: 500), () {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    });
+  }
+
   Future<File?> _cropImage({required File imageFile}) async {
     CroppedFile? croppedImage =
         await ImageCropper().cropImage(sourcePath: imageFile.path);
@@ -316,60 +340,57 @@ class _MyCameraState extends State<MyCamera> {
   }
 
   Uint8List imageToByteListFloat32(
-    img.Image image, int inputSize, double mean, double std) {
-  var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
-  var buffer = Float32List.view(convertedBytes.buffer);
-  int pixelIndex = 0;
-  for (var i = 0; i < inputSize; i++) {
-    for (var j = 0; j < inputSize; j++) {
-      var pixel = image.getPixel(j, i);
-      buffer[pixelIndex++] = (img.getRed(pixel) / mean) - std;
-      buffer[pixelIndex++] = (img.getGreen(pixel) / mean) - std;
-      buffer[pixelIndex++] = (img.getBlue(pixel) / mean) - std;
+      img.Image image, int inputSize, double mean, double std) {
+    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+    var buffer = Float32List.view(convertedBytes.buffer);
+    int pixelIndex = 0;
+    for (var i = 0; i < inputSize; i++) {
+      for (var j = 0; j < inputSize; j++) {
+        var pixel = image.getPixel(j, i);
+        buffer[pixelIndex++] = (img.getRed(pixel) / mean) - std;
+        buffer[pixelIndex++] = (img.getGreen(pixel) / mean) - std;
+        buffer[pixelIndex++] = (img.getBlue(pixel) / mean) - std;
+      }
     }
+    return convertedBytes.buffer.asUint8List();
   }
-  return convertedBytes.buffer.asUint8List();
-}
 
-double computeLaplacianVariance(img.Image image) {
-  // Apply Laplacian filter to the image
-  img.Image filteredImage = img.convolution(image, [
-    0, 1, 0,
-    1, -4, 1,
-    0, 1, 0
-  ]);
+  double computeLaplacianVariance(img.Image image) {
+    // Apply Laplacian filter to the image
+    img.Image filteredImage =
+        img.convolution(image, [0, 1, 0, 1, -4, 1, 0, 1, 0]);
 
-  // Compute the variance of the filtered image
-  double variance = computeVariance(filteredImage);
+    // Compute the variance of the filtered image
+    double variance = computeVariance(filteredImage);
 
-  return variance;
-}
-double computeVariance(img.Image image) {
-  // Calculate the mean intensity
-  double sum = 0;
-  for (int y = 0; y < image.height; y++) {
-    for (int x = 0; x < image.width; x++) {
-      int pixel = image.getPixel(x, y);
-      int intensity = img.getRed(pixel); // Assuming grayscale image
-      sum += intensity;
+    return variance;
+  }
+
+  double computeVariance(img.Image image) {
+    // Calculate the mean intensity
+    double sum = 0;
+    for (int y = 0; y < image.height; y++) {
+      for (int x = 0; x < image.width; x++) {
+        int pixel = image.getPixel(x, y);
+        int intensity = img.getRed(pixel); // Assuming grayscale image
+        sum += intensity;
+      }
     }
-  }
-  double mean = sum / (image.width * image.height);
+    double mean = sum / (image.width * image.height);
 
-  // Calculate the variance
-  double variance = 0;
-  for (int y = 0; y < image.height; y++) {
-    for (int x = 0; x < image.width; x++) {
-      int pixel = image.getPixel(x, y);
-      int intensity = img.getRed(pixel); // Assuming grayscale image
-      variance += (intensity - mean) * (intensity - mean);
+    // Calculate the variance
+    double variance = 0;
+    for (int y = 0; y < image.height; y++) {
+      for (int x = 0; x < image.width; x++) {
+        int pixel = image.getPixel(x, y);
+        int intensity = img.getRed(pixel); // Assuming grayscale image
+        variance += (intensity - mean) * (intensity - mean);
+      }
     }
+    variance /= (image.width * image.height);
+
+    return variance;
   }
-  variance /= (image.width * image.height);
-
-  return variance;
-}
-
 
   Future _classifyImage(File file) async {
     List<int> IMAGE_SIZE = [224, 224];
@@ -390,22 +411,21 @@ double computeVariance(img.Image image) {
     double laplacianVariance = computeLaplacianVariance(grayscaleImage);
     print({"Laplacian Variance": laplacianVariance});
     // detect if image contains sharp strands of abaca fiber
-    if(laplacianVariance < 1000){
+    if (laplacianVariance < 1000) {
       // image does not contain enough strands to increase image sharpness
       return 'NA'; // Not Abaca
     }
-    if(laplacianVariance < 1500){
+    if (laplacianVariance < 1500) {
       // Image contains abaca but strands are smeared to be clasified
       return 'B';
     }
 
-    var recognitions = await Tflite.runModelOnImage( 
+    var recognitions = await Tflite.runModelOnImage(
       path: preprocessed.path, // required
       numResults: 1, // defaults to 5
       threshold: 0.2, // defaults to 0.1
       asynch: true, // defaults to true
     );
-
 
     List<String> labels = [];
     bool resultMatches = true; // Initialize resultMatches here
@@ -414,6 +434,7 @@ double computeVariance(img.Image image) {
       // if confidence level is more than 60%
       if (recognitions[0]['confidence'] > 0.6) {
         labels.add(recognitions[0]['label']);
+        showConfidenceSnackBar(context, recognitions[0]['confidence']);
       }
     }
     return labels.isNotEmpty ? labels[0] : null;
@@ -476,7 +497,7 @@ double computeVariance(img.Image image) {
                               ),
                               borderRadius: BorderRadius.circular(20.0),
                             ),
-                            child: const  Column(
+                            child: const Column(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 SizedBox(
@@ -497,64 +518,70 @@ double computeVariance(img.Image image) {
                               abacaGrades.length,
                               (index) => Flexible(
                                 child: SizedBox(
-                                    width: 45.0,
-                                    height: 45.0,
-                                    child: ElevatedButton(
-                                      onPressed: () => handleClick(index),
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(200.0),
-                                        ),
-                                        padding: const EdgeInsets.all(0),
-                                        elevation: shouldStartMatching
-                                            ? abacaGrades[index] == _recognition
-                                                ? 1
-                                                : 0
-                                            : 0,
+                                  width: 45.0,
+                                  height: 45.0,
+                                  child: ElevatedButton(
+                                    onPressed: () => handleClick(index),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(200.0),
                                       ),
-                                      child: Ink(
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: shouldStartMatching
-                                                ? abacaGrades[index] == _recognition
-                                                    ? [
-                                                        gradient1Color,
-                                                        gradient1Color
-                                                      ]
-                                                    : [
-                                                        gradient2Color,
-                                                        gradient2Color
-                                                      ]
-                                                : [gradient2Color, gradient2Color],
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.center,
-                                          ),
-                                          borderRadius: BorderRadius.circular(80.0),
+                                      padding: const EdgeInsets.all(0),
+                                      elevation: shouldStartMatching
+                                          ? abacaGrades[index] == _recognition
+                                              ? 1
+                                              : 0
+                                          : 0,
+                                    ),
+                                    child: Ink(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: shouldStartMatching
+                                              ? abacaGrades[index] ==
+                                                      _recognition
+                                                  ? [
+                                                      gradient1Color,
+                                                      gradient1Color
+                                                    ]
+                                                  : [
+                                                      gradient2Color,
+                                                      gradient2Color
+                                                    ]
+                                              : [
+                                                  gradient2Color,
+                                                  gradient2Color
+                                                ],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.center,
                                         ),
-                                        child: Container(
-                                          constraints: const BoxConstraints(
-                                            minWidth: 20.0,
-                                            minHeight: 20.0,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            abacaGrades[index],
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 16.0,
-                                              color: shouldStartMatching
-                                                  ? abacaGrades[index] ==
-                                                          _recognition
-                                                      ? gradient2Color
-                                                      : Colors.white.withOpacity(.5)
-                                                  : Colors.white.withOpacity(.5),
-                                            ),
+                                        borderRadius:
+                                            BorderRadius.circular(80.0),
+                                      ),
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                          minWidth: 20.0,
+                                          minHeight: 20.0,
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          abacaGrades[index],
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16.0,
+                                            color: shouldStartMatching
+                                                ? abacaGrades[index] ==
+                                                        _recognition
+                                                    ? gradient2Color
+                                                    : Colors.white
+                                                        .withOpacity(.5)
+                                                : Colors.white.withOpacity(.5),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
+                                ),
                               ),
                             ),
                           ),
@@ -960,105 +987,98 @@ double computeVariance(img.Image image) {
                                         padding: const EdgeInsets.fromLTRB(
                                             16, 8, 16, 32),
                                         child: StreamBuilder<DatabaseEvent>(
-                                            stream: _databaseReference.onValue,
-                                            builder: (BuildContext context,
-                                                AsyncSnapshot<DatabaseEvent>
-                                                    snapshot) {
-                                              if (snapshot.hasData) {
-                                                Map<dynamic, dynamic> data =
-                                                    snapshot.data!.snapshot
-                                                            .value
-                                                        as Map<dynamic,
-                                                            dynamic>;
-                                                List<TableRow> rows =
-                                                    generateTableRows(
-                                                        data, dropdownValue);
+                                          stream: _databaseReference.onValue,
+                                          builder: (BuildContext context,
+                                              AsyncSnapshot<DatabaseEvent>
+                                                  snapshot) {
+                                            if (snapshot.hasData) {
+                                              Map<dynamic, dynamic> data =
+                                                  snapshot.data!.snapshot.value
+                                                      as Map<dynamic, dynamic>;
+                                              List<TableRow> rows =
+                                                  generateTableRows(
+                                                      data, dropdownValue);
 
-                                                String dateRange = '';
-                                                if (dropdownValue == 'Today') {
-                                                  String todayDate =
-                                                      '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}';
-                                                  dateRange = todayDate;
-                                                } else if (dropdownValue ==
-                                                    'This Week') {
-                                                  DateTime startOfWeek =
-                                                      DateTime.now().subtract(
-                                                          Duration(
-                                                              days: DateTime
-                                                                          .now()
-                                                                      .weekday -
-                                                                  1));
-                                                  DateTime endOfWeek =
-                                                      startOfWeek.add(
-                                                          const Duration(
-                                                              days: 6));
-                                                  dateRange =
-                                                      '${startOfWeek.month}-${startOfWeek.day}-${startOfWeek.year} to ${endOfWeek.month}-${endOfWeek.day}-${endOfWeek.year}';
-                                                } else if (dropdownValue ==
-                                                    'This Month') {
-                                                  DateTime startOfMonth =
-                                                      DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month,
-                                                          1);
-                                                  DateTime endOfMonth =
-                                                      DateTime(
-                                                          DateTime.now().year,
-                                                          DateTime.now().month +
-                                                              1,
-                                                          0);
-                                                  dateRange =
-                                                      '${startOfMonth.month}-${startOfMonth.day}-${startOfMonth.year} to ${endOfMonth.month}-${endOfMonth.day}-${endOfMonth.year}';
-                                                }
+                                              String dateRange = '';
+                                              if (dropdownValue == 'Today') {
+                                                String todayDate =
+                                                    '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}';
+                                                dateRange = todayDate;
+                                              } else if (dropdownValue ==
+                                                  'This Week') {
+                                                DateTime startOfWeek =
+                                                    DateTime.now().subtract(
+                                                        Duration(
+                                                            days: DateTime.now()
+                                                                    .weekday -
+                                                                1));
+                                                DateTime endOfWeek = startOfWeek
+                                                    .add(const Duration(
+                                                        days: 6));
+                                                dateRange =
+                                                    '${startOfWeek.month}-${startOfWeek.day}-${startOfWeek.year} to ${endOfWeek.month}-${endOfWeek.day}-${endOfWeek.year}';
+                                              } else if (dropdownValue ==
+                                                  'This Month') {
+                                                DateTime startOfMonth =
+                                                    DateTime(
+                                                        DateTime.now().year,
+                                                        DateTime.now().month,
+                                                        1);
+                                                DateTime endOfMonth = DateTime(
+                                                    DateTime.now().year,
+                                                    DateTime.now().month + 1,
+                                                    0);
+                                                dateRange =
+                                                    '${startOfMonth.month}-${startOfMonth.day}-${startOfMonth.year} to ${endOfMonth.month}-${endOfMonth.day}-${endOfMonth.year}';
+                                              }
 
-                                                return Table(
-                                                  border: TableBorder.all(
-                                                      color: gradient2Color),
-                                                  children: [
-                                                    TableRow(children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8),
-                                                        child: Center(
-                                                          child: Text(
-                                                            dateRange,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style:
-                                                                const TextStyle(
-                                                              color:
-                                                                  gradient2Color,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
+                                              return Table(
+                                                border: TableBorder.all(
+                                                    color: gradient2Color),
+                                                children: [
+                                                  TableRow(children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8),
+                                                      child: Center(
+                                                        child: Text(
+                                                          dateRange,
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style:
+                                                              const TextStyle(
+                                                            color:
+                                                                gradient2Color,
+                                                            fontWeight:
+                                                                FontWeight.w600,
                                                           ),
                                                         ),
                                                       ),
-                                                    ]),
-                                                    TableRow(children: [
-                                                      Table(
-                                                        border: TableBorder.all(
-                                                            color:
-                                                                gradient2Color),
-                                                        children: rows,
-                                                      )
-                                                    ])
-                                                  ],
-                                                );
-                                              } else if (snapshot.hasError) {
-                                                return Center(
-                                                  child: Text(
-                                                      'Error: ${snapshot.error}'),
-                                                );
-                                              } else {
-                                                return const Center(
-                                                  child:
-                                                      CircularProgressIndicator(),
-                                                );
-                                              }
-                                            },
+                                                    ),
+                                                  ]),
+                                                  TableRow(children: [
+                                                    Table(
+                                                      border: TableBorder.all(
+                                                          color:
+                                                              gradient2Color),
+                                                      children: rows,
+                                                    )
+                                                  ])
+                                                ],
+                                              );
+                                            } else if (snapshot.hasError) {
+                                              return Center(
+                                                child: Text(
+                                                    'Error: ${snapshot.error}'),
+                                              );
+                                            } else {
+                                              return const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              );
+                                            }
+                                          },
                                         ),
                                       ),
                                       // pdf button download
@@ -1068,652 +1088,617 @@ double computeVariance(img.Image image) {
                                         padding: const EdgeInsets.fromLTRB(
                                             18, 0, 18, 24),
                                         child: StreamBuilder<DatabaseEvent>(
-                                            stream: _databaseReference.onValue,
-                                            builder: (BuildContext context,
-                                                AsyncSnapshot<DatabaseEvent>
-                                                    snapshot) {
-                                              if (snapshot.hasData) {
-                                                Map<dynamic, dynamic> data =
-                                                    snapshot.data!.snapshot
-                                                            .value
-                                                        as Map<dynamic,
-                                                            dynamic>;
+                                          stream: _databaseReference.onValue,
+                                          builder: (BuildContext context,
+                                              AsyncSnapshot<DatabaseEvent>
+                                                  snapshot) {
+                                            if (snapshot.hasData) {
+                                              Map<dynamic, dynamic> data =
+                                                  snapshot.data!.snapshot.value
+                                                      as Map<dynamic, dynamic>;
 
-                                                return Center(
-                                                  child: FractionallySizedBox(
-                                                    widthFactor: 0.8,
-                                                    child: ElevatedButton(
-                                                      onPressed: () async {
-                                                        if (dropdownValue ==
-                                                            'Today') {
-                                                          // Create a new PDF document
-                                                          PdfDocument document =
-                                                              PdfDocument();
+                                              return Center(
+                                                child: FractionallySizedBox(
+                                                  widthFactor: 0.8,
+                                                  child: ElevatedButton(
+                                                    onPressed: () async {
+                                                      if (dropdownValue ==
+                                                          'Today') {
+                                                        // Create a new PDF document
+                                                        PdfDocument document =
+                                                            PdfDocument();
 
-                                                          // Add a new page to the document
-                                                          PdfPage page =
-                                                              document.pages
-                                                                  .add();
+                                                        // Add a new page to the document
+                                                        PdfPage page = document
+                                                            .pages
+                                                            .add();
 
-                                                          // Create a PdfGrid
-                                                          PdfGrid grid =
-                                                              PdfGrid();
+                                                        // Create a PdfGrid
+                                                        PdfGrid grid =
+                                                            PdfGrid();
 
-                                                          // Add the columns to the grid
-                                                          grid.columns
-                                                              .add(count: 2);
+                                                        // Add the columns to the grid
+                                                        grid.columns
+                                                            .add(count: 2);
 
-                                                          // Add header to the grid
-                                                          grid.headers.add(1);
+                                                        // Add header to the grid
+                                                        grid.headers.add(1);
 
-                                                          // Set the header values
-                                                          PdfGridRow header =
-                                                              grid.headers[0];
-                                                          header.cells[0]
-                                                              .value = 'Grades';
-                                                          header.cells[1]
-                                                                  .value =
-                                                              'Classified';
+                                                        // Set the header values
+                                                        PdfGridRow header =
+                                                            grid.headers[0];
+                                                        header.cells[0].value =
+                                                            'Grades';
+                                                        header.cells[1].value =
+                                                            'Classified';
 
-                                                          // Add data rows to the grid
-                                                          String todayDate =
-                                                              '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}';
-                                                          var dailyData =
-                                                              data[todayDate];
+                                                        // Add data rows to the grid
+                                                        String todayDate =
+                                                            '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}';
+                                                        var dailyData =
+                                                            data[todayDate];
 
-                                                          dailyData.forEach(
-                                                              (key, value) {
-                                                            PdfGridRow row =
-                                                                grid.rows.add();
-                                                            row.cells[0].value =
-                                                                key;
-                                                            row.cells[1].value =
-                                                                value
-                                                                    .toString();
-                                                          });
+                                                        dailyData.forEach(
+                                                            (key, value) {
+                                                          PdfGridRow row =
+                                                              grid.rows.add();
+                                                          row.cells[0].value =
+                                                              key;
+                                                          row.cells[1].value =
+                                                              value.toString();
+                                                        });
 
-                                                          // Set the grid style
-                                                          grid.style =
-                                                              PdfGridStyle(
-                                                            cellPadding:
-                                                                PdfPaddings(
-                                                                    left: 2,
-                                                                    right: 3,
-                                                                    top: 4,
-                                                                    bottom: 5),
-                                                            backgroundBrush:
-                                                                PdfBrushes
-                                                                    .white,
-                                                            textBrush:
-                                                                PdfBrushes
-                                                                    .black,
-                                                            font: PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                          );
+                                                        // Set the grid style
+                                                        grid.style =
+                                                            PdfGridStyle(
+                                                          cellPadding:
+                                                              PdfPaddings(
+                                                                  left: 2,
+                                                                  right: 3,
+                                                                  top: 4,
+                                                                  bottom: 5),
+                                                          backgroundBrush:
+                                                              PdfBrushes.white,
+                                                          textBrush:
+                                                              PdfBrushes.black,
+                                                          font: PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                        );
 
-                                                          // Add the title at the top center
-                                                          // Header
-                                                          page.graphics
-                                                              .drawString(
-                                                            'Classified Abaca Fiber',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                22),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              0, // Top of the page
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .center),
-                                                          );
-
-                                                          // Body (centered)
-                                                          double gridHeight =
-                                                              0; // Will store the height of the grid after drawing
-                                                          PdfLayoutResult?
-                                                              gridResult =
-                                                              grid.draw(
-                                                            page: page,
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80, // Positioned below the header
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width, // Full page width
-                                                              0,
-                                                            ),
-                                                          );
-                                                          if (gridResult !=
-                                                              null) {
-                                                            gridHeight =
-                                                                gridResult
-                                                                    .bounds
-                                                                    .height;
-                                                          }
-
-                                                          // Footer
-                                                          page.graphics
-                                                              .drawString(
-                                                            '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80 +
-                                                                  gridHeight +
-                                                                  20, // Positioned below the body (grid) with some spacing
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .right),
-                                                          );
-
-                                                          // Save the document
-                                                          List<int> bytes =
-                                                              await document
-                                                                  .save();
-
-                                                          // Dispose the document
-                                                          document.dispose();
-
-                                                          // Get external storage directory
-                                                          final directory =
-                                                              await getApplicationSupportDirectory();
-
-                                                          // Get directory path
-                                                          final path =
-                                                              directory.path;
-
-                                                          // Create an empty file to write PDF data
-                                                          File file = File(
-                                                              '$path/Output.pdf');
-
-                                                          // Write PDF data to the file
-                                                          await file
-                                                              .writeAsBytes(
-                                                                  bytes,
-                                                                  flush: true);
-
-                                                          // Open the PDF document in mobile
-                                                          OpenFile.open(
-                                                              '$path/Output.pdf');
-                                                        } else if (dropdownValue ==
-                                                            'This Week') {
-                                                          // Create a new PDF document
-                                                          PdfDocument document =
-                                                              PdfDocument();
-
-                                                          // Add a new page to the document
-                                                          PdfPage page =
-                                                              document.pages
-                                                                  .add();
-
-                                                          // Create a PdfGrid
-                                                          PdfGrid grid =
-                                                              PdfGrid();
-
-                                                          // Add the columns to the grid
-                                                          grid.columns
-                                                              .add(count: 2);
-
-                                                          // Add header to the grid
-                                                          grid.headers.add(1);
-
-                                                          // Set the header values
-                                                          PdfGridRow header =
-                                                              grid.headers[0];
-                                                          header.cells[0]
-                                                              .value = 'Grades';
-                                                          header.cells[1]
-                                                                  .value =
-                                                              'Classified';
-
-                                                          // Add data rows to the grid
-                                                          DateTime startOfWeek = DateTime
-                                                                  .now()
-                                                              .subtract(Duration(
-                                                                  days: DateTime
-                                                                              .now()
-                                                                          .weekday -
-                                                                      1));
-                                                          DateTime endOfWeek =
-                                                              startOfWeek.add(
-                                                                  const Duration(
-                                                                      days: 6));
-                                                          List<String>
-                                                              weeklyDates = [];
-                                                          for (var i = 0;
-                                                              i < 7;
-                                                              i++) {
-                                                            var date = startOfWeek
-                                                                .add(Duration(
-                                                                    days: i));
-                                                            weeklyDates.add(
-                                                                '${date.month}-${date.day}-${date.year}');
-                                                          }
-
-                                                          Map<String, int>
-                                                              weeklyTotals = {};
-                                                          weeklyDates
-                                                              .forEach((date) {
-                                                            if (data
-                                                                .containsKey(
-                                                                    date)) {
-                                                              data[date]
-                                                                  .forEach((key,
-                                                                      value) {
-                                                                weeklyTotals[
-                                                                    key] = (weeklyTotals[
-                                                                            key] ??
-                                                                        0) +
-                                                                    (value
-                                                                        as int);
-                                                              });
-                                                            }
-                                                          });
-
-                                                          weeklyTotals.forEach(
-                                                              (key, value) {
-                                                            PdfGridRow row =
-                                                                grid.rows.add();
-                                                            row.cells[0].value =
-                                                                key;
-                                                            row.cells[1].value =
-                                                                value
-                                                                    .toString();
-                                                          });
-
-                                                          // Set the grid style
-                                                          grid.style =
-                                                              PdfGridStyle(
-                                                            cellPadding:
-                                                                PdfPaddings(
-                                                                    left: 2,
-                                                                    right: 3,
-                                                                    top: 4,
-                                                                    bottom: 5),
-                                                            backgroundBrush:
-                                                                PdfBrushes
-                                                                    .white,
-                                                            textBrush:
-                                                                PdfBrushes
-                                                                    .black,
-                                                            font: PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                          );
-
-                                                          // Add the title at the top center
-                                                          // Header
-                                                          page.graphics
-                                                              .drawString(
-                                                            'Classified Abaca Fiber',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                22),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              0, // Top of the page
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .center),
-                                                          );
-
-                                                          // Body (centered)
-                                                          double gridHeight =
-                                                              0; // Will store the height of the grid after drawing
-                                                          PdfLayoutResult?
-                                                              gridResult =
-                                                              grid.draw(
-                                                            page: page,
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80, // Positioned below the header
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width, // Full page width
-                                                              0,
-                                                            ),
-                                                          );
-                                                          if (gridResult !=
-                                                              null) {
-                                                            gridHeight =
-                                                                gridResult
-                                                                    .bounds
-                                                                    .height;
-                                                          }
-
-                                                          // Footer
-                                                          page.graphics
-                                                              .drawString(
-                                                            '${startOfWeek.month}-${startOfWeek.day}-${startOfWeek.year} to ${endOfWeek.month}-${endOfWeek.day}-${endOfWeek.year}',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80 +
-                                                                  gridHeight +
-                                                                  20, // Positioned below the body (grid) with some spacing
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .right),
-                                                          );
-
-                                                          // Save the document
-                                                          List<int> bytes =
-                                                              await document
-                                                                  .save();
-
-                                                          // Dispose the document
-                                                          document.dispose();
-
-                                                          // Get external storage directory
-                                                          final directory =
-                                                              await getApplicationSupportDirectory();
-
-                                                          // Get directory path
-                                                          final path =
-                                                              directory.path;
-
-                                                          // Create an empty file to write PDF data
-                                                          File file = File(
-                                                              '$path/Output.pdf');
-
-                                                          // Write PDF data to the file
-                                                          await file
-                                                              .writeAsBytes(
-                                                                  bytes,
-                                                                  flush: true);
-
-                                                          // Open the PDF document in mobile
-                                                          OpenFile.open(
-                                                              '$path/Output.pdf');
-                                                        } else if (dropdownValue ==
-                                                            'This Month') {
-                                                          // Create a new PDF document
-                                                          PdfDocument document =
-                                                              PdfDocument();
-
-                                                          // Add a new page to the document
-                                                          PdfPage page =
-                                                              document.pages
-                                                                  .add();
-
-                                                          // Create a PdfGrid
-                                                          PdfGrid grid =
-                                                              PdfGrid();
-
-                                                          // Add the columns to the grid
-                                                          grid.columns
-                                                              .add(count: 2);
-
-                                                          // Add header to the grid
-                                                          grid.headers.add(1);
-
-                                                          // Set the header values
-                                                          PdfGridRow header =
-                                                              grid.headers[0];
-                                                          header.cells[0]
-                                                              .value = 'Grades';
-                                                          header.cells[1]
-                                                                  .value =
-                                                              'Classified';
-
-                                                          // Add data rows to the grid
-                                                          DateTime
-                                                              startOfMonth =
-                                                              DateTime(
-                                                                  DateTime.now()
-                                                                      .year,
-                                                                  DateTime.now()
-                                                                      .month,
-                                                                  1);
-                                                          DateTime endOfMonth =
-                                                              DateTime(
-                                                                  DateTime.now()
-                                                                      .year,
-                                                                  DateTime.now()
-                                                                          .month +
-                                                                      1,
-                                                                  0);
-                                                          List<String>
-                                                              monthlyDates = [];
-                                                          for (var i =
-                                                                  startOfMonth
-                                                                      .day;
-                                                              i <=
-                                                                  endOfMonth
-                                                                      .day;
-                                                              i++) {
-                                                            monthlyDates.add(
-                                                                '${DateTime.now().month}-$i-${DateTime.now().year}');
-                                                          }
-
-                                                          Map<String, int>
-                                                              monthlyTotals =
-                                                              {};
-                                                          monthlyDates
-                                                              .forEach((date) {
-                                                            if (data
-                                                                .containsKey(
-                                                                    date)) {
-                                                              data[date]
-                                                                  .forEach((key,
-                                                                      value) {
-                                                                monthlyTotals[
-                                                                    key] = (monthlyTotals[
-                                                                            key] ??
-                                                                        0) +
-                                                                    (value
-                                                                        as int);
-                                                              });
-                                                            }
-                                                          });
-
-                                                          monthlyTotals.forEach(
-                                                              (key, value) {
-                                                            PdfGridRow row =
-                                                                grid.rows.add();
-                                                            row.cells[0].value =
-                                                                key;
-                                                            row.cells[1].value =
-                                                                value
-                                                                    .toString();
-                                                          });
-
-                                                          // Set the grid style
-                                                          grid.style =
-                                                              PdfGridStyle(
-                                                            cellPadding:
-                                                                PdfPaddings(
-                                                                    left: 2,
-                                                                    right: 3,
-                                                                    top: 4,
-                                                                    bottom: 5),
-                                                            backgroundBrush:
-                                                                PdfBrushes
-                                                                    .white,
-                                                            textBrush:
-                                                                PdfBrushes
-                                                                    .black,
-                                                            font: PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                          );
-
-                                                          // Add the title at the top center
-                                                          // Header
-                                                          page.graphics
-                                                              .drawString(
-                                                            'Classified Abaca Fiber',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                22),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              0, // Top of the page
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .center),
-                                                          );
-
-                                                          // Body (centered)
-                                                          double gridHeight =
-                                                              0; // Will store the height of the grid after drawing
-                                                          PdfLayoutResult?
-                                                              gridResult =
-                                                              grid.draw(
-                                                            page: page,
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80, // Positioned below the header
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width, // Full page width
-                                                              0,
-                                                            ),
-                                                          );
-                                                          if (gridResult !=
-                                                              null) {
-                                                            gridHeight =
-                                                                gridResult
-                                                                    .bounds
-                                                                    .height;
-                                                          }
-
-                                                          // Footer
-                                                          page.graphics
-                                                              .drawString(
-                                                            '${DateTime.now().month} - ${DateTime.now().year}',
-                                                            PdfStandardFont(
-                                                                PdfFontFamily
-                                                                    .timesRoman,
-                                                                16),
-                                                            bounds:
-                                                                Rect.fromLTWH(
-                                                              0,
-                                                              80 +
-                                                                  gridHeight +
-                                                                  20, // Positioned below the body (grid) with some spacing
-                                                              page
-                                                                  .getClientSize()
-                                                                  .width,
-                                                              60,
-                                                            ),
-                                                            format: PdfStringFormat(
-                                                                alignment:
-                                                                    PdfTextAlignment
-                                                                        .right),
-                                                          );
-
-                                                          // Save the document
-                                                          List<int> bytes =
-                                                              await document
-                                                                  .save();
-
-                                                          // Dispose the document
-                                                          document.dispose();
-
-                                                          // Get external storage directory
-                                                          final directory =
-                                                              await getApplicationSupportDirectory();
-
-                                                          // Get directory path
-                                                          final path =
-                                                              directory.path;
-
-                                                          // Create an empty file to write PDF data
-                                                          File file = File(
-                                                              '$path/Output.pdf');
-
-                                                          // Write PDF data to the file
-                                                          await file
-                                                              .writeAsBytes(
-                                                                  bytes,
-                                                                  flush: true);
-
-                                                          // Open the PDF document in mobile
-                                                          OpenFile.open(
-                                                              '$path/Output.pdf');
-                                                        }
-                                                      },
-                                                      style: ButtonStyle(
-                                                        backgroundColor:
-                                                            MaterialStateProperty
-                                                                .all<Color>(
-                                                                    gradient2Color),
-                                                        shape: MaterialStateProperty
-                                                            .all<
-                                                                RoundedRectangleBorder>(
-                                                          RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        18.0),
+                                                        // Add the title at the top center
+                                                        // Header
+                                                        page.graphics
+                                                            .drawString(
+                                                          'Classified Abaca Fiber',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              22),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            0, // Top of the page
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
                                                           ),
-                                                        ),
-                                                      ),
-                                                      child: const Text(
-                                                        'Download PDF',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .center),
+                                                        );
+
+                                                        // Body (centered)
+                                                        double gridHeight =
+                                                            0; // Will store the height of the grid after drawing
+                                                        PdfLayoutResult?
+                                                            gridResult =
+                                                            grid.draw(
+                                                          page: page,
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80, // Positioned below the header
+                                                            page
+                                                                .getClientSize()
+                                                                .width, // Full page width
+                                                            0,
+                                                          ),
+                                                        );
+                                                        if (gridResult !=
+                                                            null) {
+                                                          gridHeight =
+                                                              gridResult.bounds
+                                                                  .height;
+                                                        }
+
+                                                        // Footer
+                                                        page.graphics
+                                                            .drawString(
+                                                          '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80 +
+                                                                gridHeight +
+                                                                20, // Positioned below the body (grid) with some spacing
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
+                                                          ),
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .right),
+                                                        );
+
+                                                        // Save the document
+                                                        List<int> bytes =
+                                                            await document
+                                                                .save();
+
+                                                        // Dispose the document
+                                                        document.dispose();
+
+                                                        // Get external storage directory
+                                                        final directory =
+                                                            await getApplicationSupportDirectory();
+
+                                                        // Get directory path
+                                                        final path =
+                                                            directory.path;
+
+                                                        // Create an empty file to write PDF data
+                                                        File file = File(
+                                                            '$path/Output.pdf');
+
+                                                        // Write PDF data to the file
+                                                        await file.writeAsBytes(
+                                                            bytes,
+                                                            flush: true);
+
+                                                        // Open the PDF document in mobile
+                                                        OpenFile.open(
+                                                            '$path/Output.pdf');
+                                                      } else if (dropdownValue ==
+                                                          'This Week') {
+                                                        // Create a new PDF document
+                                                        PdfDocument document =
+                                                            PdfDocument();
+
+                                                        // Add a new page to the document
+                                                        PdfPage page = document
+                                                            .pages
+                                                            .add();
+
+                                                        // Create a PdfGrid
+                                                        PdfGrid grid =
+                                                            PdfGrid();
+
+                                                        // Add the columns to the grid
+                                                        grid.columns
+                                                            .add(count: 2);
+
+                                                        // Add header to the grid
+                                                        grid.headers.add(1);
+
+                                                        // Set the header values
+                                                        PdfGridRow header =
+                                                            grid.headers[0];
+                                                        header.cells[0].value =
+                                                            'Grades';
+                                                        header.cells[1].value =
+                                                            'Classified';
+
+                                                        // Add data rows to the grid
+                                                        DateTime startOfWeek = DateTime
+                                                                .now()
+                                                            .subtract(Duration(
+                                                                days: DateTime
+                                                                            .now()
+                                                                        .weekday -
+                                                                    1));
+                                                        DateTime endOfWeek =
+                                                            startOfWeek.add(
+                                                                const Duration(
+                                                                    days: 6));
+                                                        List<String>
+                                                            weeklyDates = [];
+                                                        for (var i = 0;
+                                                            i < 7;
+                                                            i++) {
+                                                          var date = startOfWeek
+                                                              .add(Duration(
+                                                                  days: i));
+                                                          weeklyDates.add(
+                                                              '${date.month}-${date.day}-${date.year}');
+                                                        }
+
+                                                        Map<String, int>
+                                                            weeklyTotals = {};
+                                                        weeklyDates
+                                                            .forEach((date) {
+                                                          if (data.containsKey(
+                                                              date)) {
+                                                            data[date].forEach(
+                                                                (key, value) {
+                                                              weeklyTotals[
+                                                                      key] =
+                                                                  (weeklyTotals[
+                                                                              key] ??
+                                                                          0) +
+                                                                      (value
+                                                                          as int);
+                                                            });
+                                                          }
+                                                        });
+
+                                                        weeklyTotals.forEach(
+                                                            (key, value) {
+                                                          PdfGridRow row =
+                                                              grid.rows.add();
+                                                          row.cells[0].value =
+                                                              key;
+                                                          row.cells[1].value =
+                                                              value.toString();
+                                                        });
+
+                                                        // Set the grid style
+                                                        grid.style =
+                                                            PdfGridStyle(
+                                                          cellPadding:
+                                                              PdfPaddings(
+                                                                  left: 2,
+                                                                  right: 3,
+                                                                  top: 4,
+                                                                  bottom: 5),
+                                                          backgroundBrush:
+                                                              PdfBrushes.white,
+                                                          textBrush:
+                                                              PdfBrushes.black,
+                                                          font: PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                        );
+
+                                                        // Add the title at the top center
+                                                        // Header
+                                                        page.graphics
+                                                            .drawString(
+                                                          'Classified Abaca Fiber',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              22),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            0, // Top of the page
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
+                                                          ),
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .center),
+                                                        );
+
+                                                        // Body (centered)
+                                                        double gridHeight =
+                                                            0; // Will store the height of the grid after drawing
+                                                        PdfLayoutResult?
+                                                            gridResult =
+                                                            grid.draw(
+                                                          page: page,
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80, // Positioned below the header
+                                                            page
+                                                                .getClientSize()
+                                                                .width, // Full page width
+                                                            0,
+                                                          ),
+                                                        );
+                                                        if (gridResult !=
+                                                            null) {
+                                                          gridHeight =
+                                                              gridResult.bounds
+                                                                  .height;
+                                                        }
+
+                                                        // Footer
+                                                        page.graphics
+                                                            .drawString(
+                                                          '${startOfWeek.month}-${startOfWeek.day}-${startOfWeek.year} to ${endOfWeek.month}-${endOfWeek.day}-${endOfWeek.year}',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80 +
+                                                                gridHeight +
+                                                                20, // Positioned below the body (grid) with some spacing
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
+                                                          ),
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .right),
+                                                        );
+
+                                                        // Save the document
+                                                        List<int> bytes =
+                                                            await document
+                                                                .save();
+
+                                                        // Dispose the document
+                                                        document.dispose();
+
+                                                        // Get external storage directory
+                                                        final directory =
+                                                            await getApplicationSupportDirectory();
+
+                                                        // Get directory path
+                                                        final path =
+                                                            directory.path;
+
+                                                        // Create an empty file to write PDF data
+                                                        File file = File(
+                                                            '$path/Output.pdf');
+
+                                                        // Write PDF data to the file
+                                                        await file.writeAsBytes(
+                                                            bytes,
+                                                            flush: true);
+
+                                                        // Open the PDF document in mobile
+                                                        OpenFile.open(
+                                                            '$path/Output.pdf');
+                                                      } else if (dropdownValue ==
+                                                          'This Month') {
+                                                        // Create a new PDF document
+                                                        PdfDocument document =
+                                                            PdfDocument();
+
+                                                        // Add a new page to the document
+                                                        PdfPage page = document
+                                                            .pages
+                                                            .add();
+
+                                                        // Create a PdfGrid
+                                                        PdfGrid grid =
+                                                            PdfGrid();
+
+                                                        // Add the columns to the grid
+                                                        grid.columns
+                                                            .add(count: 2);
+
+                                                        // Add header to the grid
+                                                        grid.headers.add(1);
+
+                                                        // Set the header values
+                                                        PdfGridRow header =
+                                                            grid.headers[0];
+                                                        header.cells[0].value =
+                                                            'Grades';
+                                                        header.cells[1].value =
+                                                            'Classified';
+
+                                                        // Add data rows to the grid
+                                                        DateTime startOfMonth =
+                                                            DateTime(
+                                                                DateTime.now()
+                                                                    .year,
+                                                                DateTime.now()
+                                                                    .month,
+                                                                1);
+                                                        DateTime endOfMonth =
+                                                            DateTime(
+                                                                DateTime.now()
+                                                                    .year,
+                                                                DateTime.now()
+                                                                        .month +
+                                                                    1,
+                                                                0);
+                                                        List<String>
+                                                            monthlyDates = [];
+                                                        for (var i =
+                                                                startOfMonth
+                                                                    .day;
+                                                            i <= endOfMonth.day;
+                                                            i++) {
+                                                          monthlyDates.add(
+                                                              '${DateTime.now().month}-$i-${DateTime.now().year}');
+                                                        }
+
+                                                        Map<String, int>
+                                                            monthlyTotals = {};
+                                                        monthlyDates
+                                                            .forEach((date) {
+                                                          if (data.containsKey(
+                                                              date)) {
+                                                            data[date].forEach(
+                                                                (key, value) {
+                                                              monthlyTotals[
+                                                                      key] =
+                                                                  (monthlyTotals[
+                                                                              key] ??
+                                                                          0) +
+                                                                      (value
+                                                                          as int);
+                                                            });
+                                                          }
+                                                        });
+
+                                                        monthlyTotals.forEach(
+                                                            (key, value) {
+                                                          PdfGridRow row =
+                                                              grid.rows.add();
+                                                          row.cells[0].value =
+                                                              key;
+                                                          row.cells[1].value =
+                                                              value.toString();
+                                                        });
+
+                                                        // Set the grid style
+                                                        grid.style =
+                                                            PdfGridStyle(
+                                                          cellPadding:
+                                                              PdfPaddings(
+                                                                  left: 2,
+                                                                  right: 3,
+                                                                  top: 4,
+                                                                  bottom: 5),
+                                                          backgroundBrush:
+                                                              PdfBrushes.white,
+                                                          textBrush:
+                                                              PdfBrushes.black,
+                                                          font: PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                        );
+
+                                                        // Add the title at the top center
+                                                        // Header
+                                                        page.graphics
+                                                            .drawString(
+                                                          'Classified Abaca Fiber',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              22),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            0, // Top of the page
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
+                                                          ),
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .center),
+                                                        );
+
+                                                        // Body (centered)
+                                                        double gridHeight =
+                                                            0; // Will store the height of the grid after drawing
+                                                        PdfLayoutResult?
+                                                            gridResult =
+                                                            grid.draw(
+                                                          page: page,
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80, // Positioned below the header
+                                                            page
+                                                                .getClientSize()
+                                                                .width, // Full page width
+                                                            0,
+                                                          ),
+                                                        );
+                                                        if (gridResult !=
+                                                            null) {
+                                                          gridHeight =
+                                                              gridResult.bounds
+                                                                  .height;
+                                                        }
+
+                                                        // Footer
+                                                        page.graphics
+                                                            .drawString(
+                                                          '${DateTime.now().month} - ${DateTime.now().year}',
+                                                          PdfStandardFont(
+                                                              PdfFontFamily
+                                                                  .timesRoman,
+                                                              16),
+                                                          bounds: Rect.fromLTWH(
+                                                            0,
+                                                            80 +
+                                                                gridHeight +
+                                                                20, // Positioned below the body (grid) with some spacing
+                                                            page
+                                                                .getClientSize()
+                                                                .width,
+                                                            60,
+                                                          ),
+                                                          format: PdfStringFormat(
+                                                              alignment:
+                                                                  PdfTextAlignment
+                                                                      .right),
+                                                        );
+
+                                                        // Save the document
+                                                        List<int> bytes =
+                                                            await document
+                                                                .save();
+
+                                                        // Dispose the document
+                                                        document.dispose();
+
+                                                        // Get external storage directory
+                                                        final directory =
+                                                            await getApplicationSupportDirectory();
+
+                                                        // Get directory path
+                                                        final path =
+                                                            directory.path;
+
+                                                        // Create an empty file to write PDF data
+                                                        File file = File(
+                                                            '$path/Output.pdf');
+
+                                                        // Write PDF data to the file
+                                                        await file.writeAsBytes(
+                                                            bytes,
+                                                            flush: true);
+
+                                                        // Open the PDF document in mobile
+                                                        OpenFile.open(
+                                                            '$path/Output.pdf');
+                                                      }
+                                                    },
+                                                    style: ButtonStyle(
+                                                      backgroundColor:
+                                                          MaterialStateProperty
+                                                              .all<Color>(
+                                                                  gradient2Color),
+                                                      shape: MaterialStateProperty
+                                                          .all<
+                                                              RoundedRectangleBorder>(
+                                                        RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      18.0),
                                                         ),
                                                       ),
                                                     ),
+                                                    child: const Text(
+                                                      'Download PDF',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
                                                   ),
-                                                );
-                                              } else {
-                                                return Container();
-                                              }
-                                            },
+                                                ),
+                                              );
+                                            } else {
+                                              return Container();
+                                            }
+                                          },
                                         ),
                                       ),
                                     ],
@@ -1785,15 +1770,15 @@ double computeVariance(img.Image image) {
                         _continuousCapture; // Update shouldStartMatching
                   });
                   if (_continuousCapture) {
-                     predictionCache.resetPredictions();
-                        setState(() {
-                          _recognition = null;
-                        });
-                    _timer =
-                        Timer.periodic(const Duration(milliseconds: 200), (timer) {
+                    predictionCache.resetPredictions();
+                    setState(() {
+                      _recognition = null;
+                    });
+                    _timer = Timer.periodic(const Duration(milliseconds: 200),
+                        (timer) {
                       if (shouldStartMatching) {
                         // Only take picture and start matching if shouldStartMatching is true
-    
+
                         _takePicture(
                           context,
                         );
@@ -1841,7 +1826,7 @@ class PredictionCache {
     }
   }
 
-  void resetPredictions(){
+  void resetPredictions() {
     lastPredictions = [];
   }
 
