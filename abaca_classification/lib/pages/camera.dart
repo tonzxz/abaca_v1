@@ -248,12 +248,12 @@ class _MyCameraState extends State<MyCamera> {
           ? predictionCache.getMajorityPrediction()
           : null;
 
-      if(prediction == null){
+      if (prediction == null) {
         _confidenceHidden = true;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }else{
-        if(_confidenceHidden){
-           showConfidenceSnackBar(context );
+      } else {
+        if (_confidenceHidden) {
+          showConfidenceSnackBar(context);
         }
       }
       if (prediction != _lastPrediction) {
@@ -319,6 +319,7 @@ class _MyCameraState extends State<MyCamera> {
       print(e);
     }
   }
+
   double _confidence = 0.0;
   bool _confidenceHidden = true;
   void showConfidenceSnackBar(BuildContext context) {
@@ -448,15 +449,13 @@ class _MyCameraState extends State<MyCamera> {
       // if confidence level is more than 60%
       if (recognitions[0]['confidence'] > 0.6) {
         labels.add(recognitions[0]['label']);
-        
       }
     }
-    if(labels.isNotEmpty){
-      setState((){
+    if (labels.isNotEmpty) {
+      setState(() {
         _confidence = recognitions![0]['confidence'];
       });
     }
-
 
     return labels.isNotEmpty ? labels[0] : null;
   }
@@ -949,9 +948,27 @@ class _MyCameraState extends State<MyCamera> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            8, 16, 0, 0),
+                                        child: Align(
+                                          alignment:
+                                              AlignmentDirectional.centerStart,
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.arrow_back_ios,
+                                              color: gradient2Color,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+
                                       const Padding(
                                         padding:
-                                            EdgeInsets.fromLTRB(8, 16.0, 8, 0),
+                                            EdgeInsets.fromLTRB(8, 0, 8, 0),
                                         child: Center(
                                           child: Text(
                                             "Classified Abaca Fibers",
