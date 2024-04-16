@@ -301,6 +301,10 @@ class _MyCameraState extends State<MyCamera> {
       }
       if(prediction == null){
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }else{
+        if(_lastPrediction != null){
+          showConfidenceSnackBar(context );
+        }
       }
       setState(() {
         // if (!isCloseToBlack) {
@@ -312,14 +316,14 @@ class _MyCameraState extends State<MyCamera> {
       print(e);
     }
   }
-
-  void showConfidenceSnackBar(BuildContext context, double confidence) {
+  double _confidence = 0.0;
+  void showConfidenceSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: Colors.transparent,
         content: Center(
           child: Text(
-            'Confidence: ${(confidence * 100).toStringAsFixed(0)}%',
+            'Confidence: ${(_confidence * 100).toStringAsFixed(0)}%',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: gradient2Color,
@@ -439,9 +443,16 @@ class _MyCameraState extends State<MyCamera> {
       // if confidence level is more than 60%
       if (recognitions[0]['confidence'] > 0.6) {
         labels.add(recognitions[0]['label']);
-        showConfidenceSnackBar(context, recognitions[0]['confidence']);
+        
       }
     }
+    if(labels.isNotEmpty){
+      setState((){
+        _confidence = recognitions![0]['confidence'];
+      });
+    }
+
+
     return labels.isNotEmpty ? labels[0] : null;
   }
 
