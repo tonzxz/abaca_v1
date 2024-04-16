@@ -302,7 +302,7 @@ class _MyCameraState extends State<MyCamera> {
       if(prediction == null){
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }else{
-        if(_lastPrediction != null){
+        if(_lastPrediction == null){
           showConfidenceSnackBar(context );
         }
       }
