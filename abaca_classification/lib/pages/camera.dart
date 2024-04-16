@@ -238,12 +238,10 @@ class _MyCameraState extends State<MyCamera> {
         } else {
           predictionCache.addPrediction("X");
         }
-        prediction = "X";
       }
       // Check if does not have abaca
       if (prediction == 'NA') {
         predictionCache.resetPredictions();
-        prediction = "X";
       }
 
       prediction = predictionCache.getMajorityPrediction() != "X"
