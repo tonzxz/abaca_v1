@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
 import 'package:open_file/open_file.dart';
@@ -248,15 +249,6 @@ class _MyCameraState extends State<MyCamera> {
           ? predictionCache.getMajorityPrediction()
           : null;
 
-      if(prediction == null){
-        _confidenceHidden = true;
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }else{
-       if(_confidenceHidden){
-           showConfidenceSnackBar(context );
-        }
-
-      }
 
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
@@ -315,8 +307,18 @@ class _MyCameraState extends State<MyCamera> {
         // if (!isCloseToBlack) {
         _recognition = prediction;
         // }
-        _image = File(imagePath);
+        // _image = File(imagePath);
       });
+
+      
+      if(prediction == null){
+        _confidenceHidden = true;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }else{
+       if(_confidenceHidden  && _continuousCapture){
+           showConfidenceSnackBar(context );
+        }
+      }
     } catch (e) {
       print(e);
     }
@@ -407,33 +409,55 @@ class _MyCameraState extends State<MyCamera> {
     return variance;
   }
 
+  img.Image cropAndResizeCenter(img.Image image) {
+    int height = image.height;
+    int width = image.width;
+    // print(height);
+    // print(width);
+
+    // Calculate starting and ending indices for cropping
+    int startX = (width - width/2) ~/ 2;
+    int startY = (height - width/2) ~/ 2;
+    int endX = (startX + width/2).round() ;
+    int endY = (startY + width/2).round();
+
+    // Perform cropping
+    img.Image croppedImage = img.copyCrop(image, startX, startY, endX - startX, endY - startY);
+    
+    // Resize to final dimensions
+    return img.copyResize(croppedImage, width: 224, height: 224, interpolation: img.Interpolation.nearest);
+  }
   Future _classifyImage(File file) async {
-    List<int> IMAGE_SIZE = [224, 224];
+    // List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
 
     // image = img.flipVertical(image!);
     // image = img.copyRotate(image!,90);
-
-    var reduced = img.copyResize(image!,
-        width: IMAGE_SIZE[0],
-        height: IMAGE_SIZE[1],
-        interpolation: img.Interpolation.linear);
-
+    // var reduced = img.copyResize(image!,
+    //     width: IMAGE_SIZE[0],
+    //     height: IMAGE_SIZE[1],
+    //     interpolation: img.Interpolation.linear);
+    var reduced = cropAndResizeCenter(image!);
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
+    // setState((){
+    //   _image = preprocessed;
+    // });
+    //  _timer?.cancel();
+    //  return null;
     img.Image grayscaleImage = img.grayscale(reduced);
     double laplacianVariance = computeLaplacianVariance(grayscaleImage);
     print({"Laplacian Variance": laplacianVariance});
     // detect if image contains sharp strands of abaca fiber
-    if (laplacianVariance < 1000) {
+    if (laplacianVariance < 2800) {
       // image does not contain enough strands to increase image sharpness
       return 'NA'; // Not Abaca
     }
-    if (laplacianVariance < 1500) {
-      // Image contains abaca but strands are smeared to be clasified
-      return 'B';
-    }
+    // if (laplacianVariance < 1200) {
+    // // Image contains abaca but strands are smeared to be clasified
+    //   return 'B';
+    // }
 
     var recognitions = await Tflite.runModelOnImage(
       path: preprocessed.path, // required
@@ -443,6 +467,12 @@ class _MyCameraState extends State<MyCamera> {
       threshold: 0.2, // defaults to 0.1
       asynch: true, // defaults to true
     );
+    // var recognitions = await Tflite.runModelOnBinary(
+    //     binary: imageToByteListFloat32(reduced, 224, 1, 0),// required
+    //     numResults: 6,    // defaults to 5
+    //     threshold: 0.05,  // defaults to 0.1
+    //     asynch: true      // defaults to true
+    // );
 
     List<String> labels = [];
     bool resultMatches = true; // Initialize resultMatches here
@@ -497,7 +527,7 @@ class _MyCameraState extends State<MyCamera> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(0.0),
                                 ),
-                                child: CameraPreview(_controller!),
+                                child: _image!=null ?  Image.file(_image!):  CameraPreview(_controller!),
                               ),
                             );
                           } else {
@@ -505,6 +535,28 @@ class _MyCameraState extends State<MyCamera> {
                           }
                         },
                       ),
+                      Positioned.fill(
+                        child: SizedBox(
+                          child: Column(
+                            children: [
+                              Flexible(child: Container(color:Colors.black.withOpacity(0.5) ,),),
+                              Row(children: [
+                                  Flexible(child: Container(color:Colors.black.withOpacity(0.5) , height: 250,),),
+                                  Container(
+                                  width: 250 , // Assuming cropping square
+                                  height: 250 ,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.white, width: 2.0),
+                                  ),
+                                ),
+                                Flexible(child: Container(color:Colors.black.withOpacity(0.5) , height: 250),),
+                              ],),
+                             Flexible(child: Container(color:Colors.black.withOpacity(0.5) ,),),
+                            ] 
+                          ),
+                        ),
+                      ),
+
 
                     Stack(
                       children: [
@@ -1810,6 +1862,8 @@ class _MyCameraState extends State<MyCamera> {
                     });
                   } else {
                     _timer?.cancel();
+                    _confidenceHidden = true;
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   }
                 },
                 style: ElevatedButton.styleFrom(
