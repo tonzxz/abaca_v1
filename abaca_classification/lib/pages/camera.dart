@@ -538,27 +538,6 @@ class _MyCameraState extends State<MyCamera> {
                           }
                         },
                       ),
-<<<<<<< HEAD
-                      Positioned.fill(
-                        child: SizedBox(
-                          child: Column(
-                            children: [
-                              Flexible(child: Container(color:Colors.black.withOpacity(0.5) ,),),
-                              Row(children: [
-                                  Flexible(child: Container(color:Colors.black.withOpacity(0.5) , height: 250,),),
-                                  Container(
-                                  width: 250 , // Assuming cropping square
-                                  height: 250 ,
-                                  decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                                    border: Border.all(color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white, width: 2.0),
-                                  ),
-                                ),
-                                Flexible(child: Container(color:Colors.black.withOpacity(0.5) , height: 250),),
-                              ],),
-                             Flexible(child: Container(color:Colors.black.withOpacity(0.5) ,),),
-                            ] 
-=======
                     Positioned.fill(
                       child: SizedBox(
                         child: Column(children: [
@@ -566,7 +545,6 @@ class _MyCameraState extends State<MyCamera> {
                             child: Container(
                               color: Colors.black.withOpacity(0.5),
                             ),
->>>>>>> 044237f054ab3b0c04cde6c839d0e11602137a43
                           ),
                           Row(
                             children: [
@@ -580,8 +558,9 @@ class _MyCameraState extends State<MyCamera> {
                                 width: 250, // Assuming cropping square
                                 height: 250,
                                 decoration: BoxDecoration(
+                                    borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                                   border: Border.all(
-                                      color: Colors.white, width: 2.0),
+                                      color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white, width: 2.0),
                                 ),
                               ),
                               Flexible(
