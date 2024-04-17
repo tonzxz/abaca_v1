@@ -335,8 +335,8 @@ class _MyCameraState extends State<MyCamera> {
           child: Text(
             'Confidence: ${(_confidence * 100).toStringAsFixed(0)}%',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: gradient2Color,
+            style:  TextStyle(
+              color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white,
               fontWeight: fontMD,
             ),
           ),
@@ -546,7 +546,8 @@ class _MyCameraState extends State<MyCamera> {
                                   width: 250 , // Assuming cropping square
                                   height: 250 ,
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.white, width: 2.0),
+                                    borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                                    border: Border.all(color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white, width: 2.0),
                                   ),
                                 ),
                                 Flexible(child: Container(color:Colors.black.withOpacity(0.5) , height: 250),),
@@ -1850,7 +1851,7 @@ class _MyCameraState extends State<MyCamera> {
                     setState(() {
                       _recognition = null;
                     });
-                    _timer = Timer.periodic(const Duration(milliseconds: 200),
+                    _timer = Timer.periodic(const Duration(milliseconds: 500),
                         (timer) {
                       if (shouldStartMatching) {
                         // Only take picture and start matching if shouldStartMatching is true
