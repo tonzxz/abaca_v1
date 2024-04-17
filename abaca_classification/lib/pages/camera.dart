@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:path/path.dart' as path;
 import 'package:image/image.dart' as img;
 import 'package:open_file/open_file.dart';
@@ -27,7 +27,8 @@ class MyCamera extends StatefulWidget {
 
 class _MyCameraState extends State<MyCamera> {
   // List<String> abacaGrades = [];
-  List<String> abacaGrades = ['EF', 'G', 'H', 'I', 'JK', 'M1', 'S2', 'S3'];
+  List<String> abacaGradesLeft = ['EF', 'G', 'H', 'I'];
+  List<String> abacaGradesRight = ['JK', 'M1', 'S2', 'S3'];
 
   int activeIndex = -1;
   bool isActive = false;
@@ -249,7 +250,6 @@ class _MyCameraState extends State<MyCamera> {
           ? predictionCache.getMajorityPrediction()
           : null;
 
-
       if (prediction != _lastPrediction) {
         _lastPrediction = prediction;
         try {
@@ -310,26 +310,26 @@ class _MyCameraState extends State<MyCamera> {
         // _image = File(imagePath);
       });
 
-      
-      if(prediction == null){
+      if (prediction == null) {
         _confidenceHidden = true;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }else{
-       if(_confidenceHidden  && _continuousCapture){
-           showConfidenceSnackBar(context );
+      } else {
+        if (_confidenceHidden && _continuousCapture) {
+          showConfidenceSnackBar(context);
         }
       }
     } catch (e) {
       print(e);
     }
   }
+
   double _confidence = 0.0;
   bool _confidenceHidden = true;
   void showConfidenceSnackBar(BuildContext context) {
     _confidenceHidden = false;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration : Duration(days:1),
+        duration: Duration(days: 1),
         backgroundColor: Colors.transparent,
         content: Center(
           child: Text(
@@ -416,17 +416,20 @@ class _MyCameraState extends State<MyCamera> {
     // print(width);
 
     // Calculate starting and ending indices for cropping
-    int startX = (width - width/2) ~/ 2;
-    int startY = (height - width/2) ~/ 2;
-    int endX = (startX + width/2).round() ;
-    int endY = (startY + width/2).round();
+    int startX = (width - width / 2) ~/ 2;
+    int startY = (height - width / 2) ~/ 2;
+    int endX = (startX + width / 2).round();
+    int endY = (startY + width / 2).round();
 
     // Perform cropping
-    img.Image croppedImage = img.copyCrop(image, startX, startY, endX - startX, endY - startY);
-    
+    img.Image croppedImage =
+        img.copyCrop(image, startX, startY, endX - startX, endY - startY);
+
     // Resize to final dimensions
-    return img.copyResize(croppedImage, width: 224, height: 224, interpolation: img.Interpolation.nearest);
+    return img.copyResize(croppedImage,
+        width: 224, height: 224, interpolation: img.Interpolation.nearest);
   }
+
   Future _classifyImage(File file) async {
     // List<int> IMAGE_SIZE = [224, 224];
     var image = img.decodeImage(file.readAsBytesSync());
@@ -481,15 +484,13 @@ class _MyCameraState extends State<MyCamera> {
       // if confidence level is more than 60%
       if (recognitions[0]['confidence'] > 0.6) {
         labels.add(recognitions[0]['label']);
-        
       }
     }
-    if(labels.isNotEmpty){
-      setState((){
+    if (labels.isNotEmpty) {
+      setState(() {
         _confidence = recognitions![0]['confidence'];
       });
     }
-
 
     return labels.isNotEmpty ? labels[0] : null;
   }
@@ -527,7 +528,9 @@ class _MyCameraState extends State<MyCamera> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(0.0),
                                 ),
-                                child: _image!=null ?  Image.file(_image!):  CameraPreview(_controller!),
+                                child: _image != null
+                                    ? Image.file(_image!)
+                                    : CameraPreview(_controller!),
                               ),
                             );
                           } else {
@@ -535,6 +538,7 @@ class _MyCameraState extends State<MyCamera> {
                           }
                         },
                       ),
+<<<<<<< HEAD
                       Positioned.fill(
                         child: SizedBox(
                           child: Column(
@@ -554,17 +558,54 @@ class _MyCameraState extends State<MyCamera> {
                               ],),
                              Flexible(child: Container(color:Colors.black.withOpacity(0.5) ,),),
                             ] 
+=======
+                    Positioned.fill(
+                      child: SizedBox(
+                        child: Column(children: [
+                          Flexible(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.5),
+                            ),
+>>>>>>> 044237f054ab3b0c04cde6c839d0e11602137a43
                           ),
-                        ),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.5),
+                                  height: 250,
+                                ),
+                              ),
+                              Container(
+                                width: 250, // Assuming cropping square
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.white, width: 2.0),
+                                ),
+                              ),
+                              Flexible(
+                                child: Container(
+                                    color: Colors.black.withOpacity(0.5),
+                                    height: 250),
+                              ),
+                            ],
+                          ),
+                          Flexible(
+                            child: Container(
+                              color: Colors.black.withOpacity(0.5),
+                            ),
+                          ),
+                        ]),
                       ),
-
+                    ),
 
                     Stack(
                       children: [
                         Positioned(
                           left: 10,
-                          top: 170,
-                          bottom: 180,
+                          top: 250,
+                          bottom: 250,
                           child: Container(
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
@@ -587,12 +628,12 @@ class _MyCameraState extends State<MyCamera> {
                         ),
                         Positioned(
                           left: 10,
-                          top: 170,
-                          bottom: 160,
+                          top: 250,
+                          bottom: 250,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: List.generate(
-                              abacaGrades.length,
+                              abacaGradesLeft.length,
                               (index) => Flexible(
                                 child: SizedBox(
                                   width: 45.0,
@@ -606,7 +647,8 @@ class _MyCameraState extends State<MyCamera> {
                                       ),
                                       padding: const EdgeInsets.all(0),
                                       elevation: shouldStartMatching
-                                          ? abacaGrades[index] == _recognition
+                                          ? abacaGradesLeft[index] ==
+                                                  _recognition
                                               ? 1
                                               : 0
                                           : 0,
@@ -615,7 +657,7 @@ class _MyCameraState extends State<MyCamera> {
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: shouldStartMatching
-                                              ? abacaGrades[index] ==
+                                              ? abacaGradesLeft[index] ==
                                                       _recognition
                                                   ? [
                                                       gradient1Color,
@@ -642,12 +684,115 @@ class _MyCameraState extends State<MyCamera> {
                                         ),
                                         alignment: Alignment.center,
                                         child: Text(
-                                          abacaGrades[index],
+                                          abacaGradesLeft[index],
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontSize: 16.0,
                                             color: shouldStartMatching
-                                                ? abacaGrades[index] ==
+                                                ? abacaGradesLeft[index] ==
+                                                        _recognition
+                                                    ? gradient2Color
+                                                    : Colors.white
+                                                        .withOpacity(.5)
+                                                : Colors.white.withOpacity(.5),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 10,
+                          top: 250,
+                          bottom: 250,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [gradient2Color, gradient2Color],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              borderRadius: BorderRadius.circular(20.0),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                SizedBox(
+                                  width: 45.0,
+                                  height: 100,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 10,
+                          top: 250,
+                          bottom: 250,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              abacaGradesRight.length,
+                              (index) => Flexible(
+                                child: SizedBox(
+                                  width: 45.0,
+                                  height: 45.0,
+                                  child: ElevatedButton(
+                                    onPressed: () => handleClick(index),
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(200.0),
+                                      ),
+                                      padding: const EdgeInsets.all(0),
+                                      elevation: shouldStartMatching
+                                          ? abacaGradesRight[index] ==
+                                                  _recognition
+                                              ? 1
+                                              : 0
+                                          : 0,
+                                    ),
+                                    child: Ink(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: shouldStartMatching
+                                              ? abacaGradesRight[index] ==
+                                                      _recognition
+                                                  ? [
+                                                      gradient1Color,
+                                                      gradient1Color
+                                                    ]
+                                                  : [
+                                                      gradient2Color,
+                                                      gradient2Color
+                                                    ]
+                                              : [
+                                                  gradient2Color,
+                                                  gradient2Color
+                                                ],
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.center,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(80.0),
+                                      ),
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                          minWidth: 20.0,
+                                          minHeight: 20.0,
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          abacaGradesRight[index],
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16.0,
+                                            color: shouldStartMatching
+                                                ? abacaGradesRight[index] ==
                                                         _recognition
                                                     ? gradient2Color
                                                     : Colors.white
@@ -1005,9 +1150,27 @@ class _MyCameraState extends State<MyCamera> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            8, 16, 0, 0),
+                                        child: Align(
+                                          alignment:
+                                              AlignmentDirectional.centerStart,
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.arrow_back_ios,
+                                              color: gradient2Color,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ),
+                                      ),
+
                                       const Padding(
                                         padding:
-                                            EdgeInsets.fromLTRB(8, 16.0, 8, 0),
+                                            EdgeInsets.fromLTRB(8, 0, 8, 0),
                                         child: Center(
                                           child: Text(
                                             "Classified Abaca Fibers",

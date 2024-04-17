@@ -14,6 +14,21 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        toolbarHeight: 45,
+        leading: Container(
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: gradient2Color,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      ),
       body: GestureDetector(
         onVerticalDragEnd: (details) {
           if (details.primaryVelocity! > 0) {
@@ -63,11 +78,10 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
         const Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 50),
                   Center(
                     child: Text(
                       'Classification of Hand-stripped Abacá Fiber Grades',
@@ -79,17 +93,6 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
                       ),
                     ),
                   ),
-                  // Center(
-                  //   child: Text(
-                  //     'What you need to know:',
-                  //     textAlign: TextAlign.center,
-                  //     style: TextStyle(
-                  //       fontSize: textMD,
-                  //       fontWeight: fontLG,
-                  //       color: gradient2Color,
-                  //     ),
-                  //   ),
-                  // ),
                   SizedBox(height: 16),
                   Text(
                     'Abaca',
@@ -165,12 +168,11 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide2() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(1),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16.0, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -208,16 +210,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide3() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(2),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Streaky Two (S2)',
                     imagePath: 'assets/images/S2.jpg',
@@ -241,16 +241,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide4() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(3),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Streaky Three (S3)',
                     imagePath: 'assets/images/S3.jpg',
@@ -274,16 +272,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide5() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(4),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Current (I)',
                     imagePath: 'assets/images/I.jpg',
@@ -306,16 +302,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide6() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(5),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Soft Seconds (G)',
                     imagePath: 'assets/images/G.jpg',
@@ -339,16 +333,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide7() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(6),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Soft Brown (H)',
                     imagePath: 'assets/images/H.jpg',
@@ -371,16 +363,14 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide8() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(7),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
                   _buildFiberGrade(
                     gradeName: 'Seconds (JK)',
                     imagePath: 'assets/images/JK.jpg',
@@ -405,12 +395,11 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   Widget _buildSlide9() {
     return Column(
       children: [
-        const SizedBox(height: 30),
         _upButton(7),
         Expanded(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
