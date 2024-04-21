@@ -93,6 +93,17 @@ flutter:
     - assets/images/M1.jpg
     - assets/images/S2.jpg
     - assets/images/S3.jpg
+    - assets/images/content1.png
+    - assets/images/content2.png
+    - assets/images/content3.png
+    - assets/images/content4.png
+    - assets/images/content5.png
+    - assets/images/content6.png
+    - assets/images/content7.png
+    - assets/images/content8.png
+    - assets/images/content9.png
+    - assets/images/content10.png
+    - assets/images/
     - assets/images/abacalogo.png
     - assets/model/model.tflite
     - assets/model/label.txt
