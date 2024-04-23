@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,7 +58,6 @@ class _MyCameraState extends State<MyCamera> {
   void initState() {
     super.initState();
     loadModel();
-    // loadAbacaGrades();
     _initCamera();
   }
 
@@ -128,8 +128,11 @@ class _MyCameraState extends State<MyCamera> {
       ResolutionPreset.veryHigh,
     );
 
-    _initializeControllerFuture = _controller!.initialize().then((_) {
+    _initializeControllerFuture = _controller!.initialize().then((_)  async{
       if (!mounted) return;
+      // await _controller!.setExposureMode(ExposureMode.locked);
+      // await _controller!.setExposureOffset(await _controller!.getMinExposureOffset());
+      // await _controller!.setExposureOffset( ( await _controller!.getMinExposureOffset() + await _controller!.getMaxExposureOffset())/8);
       setState(() {});
       _controller!.setFlashMode(FlashMode.off);
     });
@@ -216,6 +219,8 @@ class _MyCameraState extends State<MyCamera> {
     if (_controller!.value.isTakingPicture) {
       return;
     }
+    // await _controller!.setExposurePoint(const Offset(0.5, 0.5));
+    // await _controller!.setExposureOffset( ( await _controller!.getMinExposureOffset() + await _controller!.getMaxExposureOffset())/8);
     try {
       final XFile? image = await _controller!.takePicture();
 
@@ -228,29 +233,30 @@ class _MyCameraState extends State<MyCamera> {
       final imagePath = '${takenDirectory.path}/captured.png';
       await File(image!.path).copy(imagePath);
 
-      var averageColor = await getAverageColor(File(imagePath));
-      HSVColor hsvColor = HSVColor.fromColor(averageColor);
-      print({"type": "Average Color Saturation", "value": hsvColor.saturation});
       var prediction = await _classifyImage(File(imagePath));
 
       // check if not blurred
-      if (prediction != 'B') {
-        if (prediction != null) {
-          predictionCache.addPrediction(prediction);
-        } else {
-          predictionCache.addPrediction("X");
-        }
+      if(prediction == 'B'){
+        prediction = _lastPrediction;
       }
+      // if (prediction != 'B') {
+      //   if (prediction != null) {
+      //     predictionCache.addPrediction(prediction);
+      //   } else {
+      //     predictionCache.addPrediction("X");
+      //   }
+      // }
       // Check if does not have abaca
       if (prediction == 'NA') {
         predictionCache.resetPredictions();
+        prediction = null;
       }
 
-      prediction = predictionCache.getMajorityPrediction() != "X"
-          ? predictionCache.getMajorityPrediction()
-          : null;
+      // prediction = predictionCache.getMajorityPrediction() != "X"
+      //     ? predictionCache.getMajorityPrediction()
+      //     : null;
 
-      if (prediction != _lastPrediction) {
+      if (prediction != _lastPrediction && _confidence > 0.8) {
         _lastPrediction = prediction;
         try {
           // skip if no changes in prediction, or on flicker frame
@@ -312,11 +318,8 @@ class _MyCameraState extends State<MyCamera> {
 
       if (prediction == null) {
         _confidenceHidden = true;
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
       } else {
-        if (_confidenceHidden && _continuousCapture) {
-          showConfidenceSnackBar(context);
-        }
+        _confidenceHidden = false;
       }
     } catch (e) {
       print(e);
@@ -336,7 +339,7 @@ class _MyCameraState extends State<MyCamera> {
             'Confidence: ${(_confidence * 100).toStringAsFixed(0)}%',
             textAlign: TextAlign.center,
             style:  TextStyle(
-              color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white,
+              color: (_recognition != null && _continuousCapture) ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white,
               fontWeight: fontMD,
             ),
           ),
@@ -357,16 +360,16 @@ class _MyCameraState extends State<MyCamera> {
   }
 
   Uint8List imageToByteListFloat32(
-      img.Image image, int inputSize, double mean, double std) {
-    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+      img.Image image, int width, int height) {
+    var convertedBytes = Float32List(1 * width * height * 3);
     var buffer = Float32List.view(convertedBytes.buffer);
     int pixelIndex = 0;
-    for (var i = 0; i < inputSize; i++) {
-      for (var j = 0; j < inputSize; j++) {
+    for (var i = 0; i < height; i++) {
+      for (var j = 0; j < width; j++) {
         var pixel = image.getPixel(j, i);
-        buffer[pixelIndex++] = (img.getRed(pixel) / mean) - std;
-        buffer[pixelIndex++] = (img.getGreen(pixel) / mean) - std;
-        buffer[pixelIndex++] = (img.getBlue(pixel) / mean) - std;
+        buffer[pixelIndex++] = img.getRed(pixel).toDouble();
+        buffer[pixelIndex++] = img.getGreen(pixel).toDouble();
+        buffer[pixelIndex++] = img.getBlue(pixel).toDouble();
       }
     }
     return convertedBytes.buffer.asUint8List();
@@ -409,17 +412,20 @@ class _MyCameraState extends State<MyCamera> {
     return variance;
   }
 
-  img.Image cropAndResizeCenter(img.Image image) {
+  
+
+  img.Image cropAndResizeCenter(img.Image image, int targetWidth, int targetHeight) {
     int height = image.height;
     int width = image.width;
+    double zoom = 2;
     // print(height);
     // print(width);
 
     // Calculate starting and ending indices for cropping
-    int startX = (width - width / 2) ~/ 2;
-    int startY = (height - width / 2) ~/ 2;
-    int endX = (startX + width / 2).round();
-    int endY = (startY + width / 2).round();
+    int startX = (width - width / zoom) ~/ 2;
+    int startY = (height - width / zoom) ~/ 2;
+    int endX = (startX + width / zoom).round();
+    int endY = (startY + width / zoom).round();
 
     // Perform cropping
     img.Image croppedImage =
@@ -427,20 +433,25 @@ class _MyCameraState extends State<MyCamera> {
 
     // Resize to final dimensions
     return img.copyResize(croppedImage,
-        width: 224, height: 224, interpolation: img.Interpolation.nearest);
+        width: targetWidth, height: targetHeight, interpolation: img.Interpolation.nearest);
   }
 
-  Future _classifyImage(File file) async {
-    // List<int> IMAGE_SIZE = [224, 224];
-    var image = img.decodeImage(file.readAsBytesSync());
+  
+  
 
+  Future _classifyImage(File file) async {
+    List<int> IMAGE_SIZE = [224, 224];
+    var image = img.decodeImage(file.readAsBytesSync());
+    // image  = img.adjustColor(image!,saturation:1.5, gamma:1.2,amount:1);
+    // print(image!.width);
+    // print(image!.height);
     // image = img.flipVertical(image!);
     // image = img.copyRotate(image!,90);
     // var reduced = img.copyResize(image!,
     //     width: IMAGE_SIZE[0],
     //     height: IMAGE_SIZE[1],
-    //     interpolation: img.Interpolation.linear);
-    var reduced = cropAndResizeCenter(image!);
+        // interpolation: img.Interpolation.linear);
+    var reduced = cropAndResizeCenter(image!, IMAGE_SIZE[0], IMAGE_SIZE[1]);
     final jpg = img.encodeJpg(reduced);
     File preprocessed = file.copySync("${file.path}(labeld).jpg");
     preprocessed.writeAsBytesSync(jpg);
@@ -449,41 +460,45 @@ class _MyCameraState extends State<MyCamera> {
     // });
     //  _timer?.cancel();
     //  return null;
+
+    // var recognitions = await Tflite.runModelOnImage(
+    //   path: preprocessed.path, // required
+    //   // imageMean: 0.0,
+    //   // imageStd: 1.0,
+    //   numResults: 1, // defaults to 5
+    //   threshold: 0.2, // defaults to 0.1
+    //   asynch: true, // defaults to true
+    // );
+    var recognitions = await Tflite.runModelOnBinary(
+        binary: imageToByteListFloat32(reduced, IMAGE_SIZE[0], IMAGE_SIZE[1]),// required
+        numResults: 6,    // defaults to 5
+        threshold: 0.05,  // defaults to 0.1
+        asynch: true      // defaults to true
+    );
+
     img.Image grayscaleImage = img.grayscale(reduced);
     double laplacianVariance = computeLaplacianVariance(grayscaleImage);
     print({"Laplacian Variance": laplacianVariance});
     // detect if image contains sharp strands of abaca fiber
-    if (laplacianVariance < 2800) {
+    if (laplacianVariance < 1500  ) {
       // image does not contain enough strands to increase image sharpness
       return 'NA'; // Not Abaca
     }
-    // if (laplacianVariance < 1200) {
-    // // Image contains abaca but strands are smeared to be clasified
-    //   return 'B';
-    // }
+    if (laplacianVariance < 3000 ) {
+    // Image contains abaca but strands are smeared to be clasified
+      return 'B';
+    }
 
-    var recognitions = await Tflite.runModelOnImage(
-      path: preprocessed.path, // required
-      // imageMean: 0.0,
-      // imageStd: 1.0,
-      numResults: 1, // defaults to 5
-      threshold: 0.2, // defaults to 0.1
-      asynch: true, // defaults to true
-    );
-    // var recognitions = await Tflite.runModelOnBinary(
-    //     binary: imageToByteListFloat32(reduced, 224, 1, 0),// required
-    //     numResults: 6,    // defaults to 5
-    //     threshold: 0.05,  // defaults to 0.1
-    //     asynch: true      // defaults to true
-    // );
 
     List<String> labels = [];
     bool resultMatches = true; // Initialize resultMatches here
     if (recognitions != null && recognitions.isNotEmpty) {
       print(recognitions[0]);
       // if confidence level is more than 60%
-      if (recognitions[0]['confidence'] > 0.6) {
+      if (recognitions[0]['confidence'] > 0.5) {
         labels.add(recognitions[0]['label']);
+      }else{
+        return 'B';
       }
     }
     if (labels.isNotEmpty) {
@@ -554,13 +569,18 @@ class _MyCameraState extends State<MyCamera> {
                                   height: 250,
                                 ),
                               ),
-                              Container(
-                                width: 250, // Assuming cropping square
-                                height: 250,
-                                decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.all(Radius.circular(8.0)),
-                                  border: Border.all(
-                                      color: _recognition != null ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white, width: 2.0),
+                              GestureDetector(
+                                onTap: () async{
+                                  await _controller!.setExposurePoint(const Offset(0.5, 0.5));
+                                },
+                                child: Container(
+                                  width: 250, // Assuming cropping square
+                                  height: 250,
+                                  decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                                    border: Border.all(
+                                        color: (_recognition != null && _continuousCapture) ? (_confidence > 0.8 ? Colors.green :Colors.orangeAccent) : Colors.white, width: 2.0),
+                                  ),
                                 ),
                               ),
                               Flexible(
@@ -578,7 +598,22 @@ class _MyCameraState extends State<MyCamera> {
                         ]),
                       ),
                     ),
-
+                     (_recognition != null && _continuousCapture)? Stack(children: [
+                      Positioned.fill(child: Column(children: [
+                        Spacer(),
+                        SizedBox(height: 320,),
+                        SizedBox(height: 50,
+                        child: Text(
+                          'Confidence: ${(_confidence * 100).toStringAsFixed(0)}%',
+                          textAlign: TextAlign.center,
+                          style:  TextStyle(
+                            color: (_confidence > 0.8 ? Colors.green :Colors.orangeAccent),
+                            fontWeight: fontMD,
+                          ),
+                        ),),
+                        Spacer(),
+                      ],))
+                    ],): SizedBox(),
                     Stack(
                       children: [
                         Positioned(
@@ -1984,15 +2019,15 @@ class _MyCameraState extends State<MyCamera> {
               child: ElevatedButton(
                 onPressed: () async {
                   setState(() {
+                     _recognition = null;
+                      _confidenceHidden = true;
                     _continuousCapture = !_continuousCapture;
                     shouldStartMatching =
                         _continuousCapture; // Update shouldStartMatching
                   });
                   if (_continuousCapture) {
                     predictionCache.resetPredictions();
-                    setState(() {
-                      _recognition = null;
-                    });
+               
                     _timer = Timer.periodic(const Duration(milliseconds: 500),
                         (timer) {
                       if (shouldStartMatching) {
@@ -2005,8 +2040,10 @@ class _MyCameraState extends State<MyCamera> {
                     });
                   } else {
                     _timer?.cancel();
-                    _confidenceHidden = true;
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    setState(() {
+                      _recognition = null;
+                      _confidenceHidden = true;
+                    });
                   }
                 },
                 style: ElevatedButton.styleFrom(
