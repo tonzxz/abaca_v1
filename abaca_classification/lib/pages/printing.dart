@@ -54,7 +54,7 @@ class _PrintingPageState extends State<PrintingPage> {
 
     if (dropdownValue == 'Today') {
       String todayDate =
-          '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}';
+          '${DateTime.now().month}-${DateTime.now().day}-${DateTime.now().year}-R';
       var dailyData = data[todayDate];
 
       dailyData.forEach((key, value) {
@@ -74,7 +74,7 @@ class _PrintingPageState extends State<PrintingPage> {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: Text(
-                  '$value',
+                  '${value.length}',
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w800,
@@ -91,14 +91,14 @@ class _PrintingPageState extends State<PrintingPage> {
       List<String> weeklyDates = [];
       for (var i = 0; i < 7; i++) {
         var date = startOfWeek.add(Duration(days: i));
-        weeklyDates.add('${date.month}-${date.day}-${date.year}');
+        weeklyDates.add('${date.month}-${date.day}-${date.year}-R');
       }
 
       Map<String, int> weeklyTotals = {};
       weeklyDates.forEach((date) {
         if (data.containsKey(date)) {
           data[date].forEach((key, value) {
-            weeklyTotals[key] = (weeklyTotals[key] ?? 0) + (value as int);
+            weeklyTotals[key] = (weeklyTotals[key] ?? 0) + (value.length as int);
           });
         }
       });
@@ -143,7 +143,7 @@ class _PrintingPageState extends State<PrintingPage> {
       monthlyDates.forEach((date) {
         if (data.containsKey(date)) {
           data[date].forEach((key, value) {
-            monthlyTotals[key] = (monthlyTotals[key] ?? 0) + (value as int);
+            monthlyTotals[key] = (monthlyTotals[key] ?? 0) + (value.length as int);
           });
         }
       });

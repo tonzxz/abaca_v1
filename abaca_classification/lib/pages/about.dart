@@ -1,5 +1,51 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:abaca_classification/theme/styles.dart';
+
+class ImageSlider extends StatefulWidget {
+  final Function() onTap;
+  final List<String> imagePaths;
+
+  const ImageSlider({
+    Key? key,
+    required this.onTap,
+    required this.imagePaths,
+  }) : super(key: key);
+
+  @override
+  _ImageSliderState createState() => _ImageSliderState();
+}
+
+class _ImageSliderState extends State<ImageSlider> {
+  int _currentImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    Timer.periodic(const Duration(milliseconds: 1500), (Timer timer) {
+      setState(() {
+        _currentImageIndex =
+            (_currentImageIndex + 1) % widget.imagePaths.length;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.asset(
+          widget.imagePaths[_currentImageIndex],
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}
 
 class AbacaFiberGradesScreen extends StatefulWidget {
   const AbacaFiberGradesScreen({super.key});
@@ -10,6 +56,14 @@ class AbacaFiberGradesScreen extends StatefulWidget {
 
 class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
   final PageController _pageController = PageController();
+
+  void _navigateToSlide(int slideNumber) {
+    _pageController.animateToPage(
+      slideNumber,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +120,8 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             _buildSlide7(),
             _buildSlide8(),
             _buildSlide9(),
+            _buildSlide10(),
+            _buildSlide11(),
           ],
         ),
       ),
@@ -74,7 +130,142 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
 
   Widget _buildSlide1() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      'Contents:',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: gradient2Color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(1),
+                        imagePaths: const [
+                          'assets/images/content1.png',
+                          'assets/images/abacalogo.png',
+                        ],
+                      ),
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(10),
+                        imagePaths: const [
+                          'assets/images/content10.png',
+                          'assets/images/ken.png',
+                          'assets/images/wa.png',
+                          'assets/images/ton.png',
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(2),
+                        imagePaths: const [
+                          'assets/images/content2.png',
+                          'assets/images/EF1.png',
+                        ],
+                      ),
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(3),
+                        imagePaths: const [
+                          'assets/images/content3.png',
+                          'assets/images/S21.png',
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(4),
+                        imagePaths: const [
+                          'assets/images/content4.png',
+                          'assets/images/S31.png',
+                        ],
+                      ),
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(5),
+                        imagePaths: const [
+                          'assets/images/content5.png',
+                          'assets/images/I1.png',
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(6),
+                        imagePaths: const [
+                          'assets/images/content6.png',
+                          'assets/images/G1.png',
+                        ],
+                      ),
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(7),
+                        imagePaths: const [
+                          'assets/images/content7.png',
+                          'assets/images/H1.png',
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(8),
+                        imagePaths: const [
+                          'assets/images/content8.png',
+                          'assets/images/JK1.png',
+                        ],
+                      ),
+                      ImageSlider(
+                        onTap: () => _navigateToSlide(9),
+                        imagePaths: const [
+                          'assets/images/content9.png',
+                          'assets/images/M11.png',
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _downButton(1),
+      ],
+    );
+  }
+
+  Widget _buildSlide2() {
+    return Column(
+      children: [
+        _upButton(1),
         const Expanded(
           child: SingleChildScrollView(
             child: Padding(
@@ -160,12 +351,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(0),
+        _downButton(1),
       ],
     );
   }
 
-  Widget _buildSlide2() {
+  Widget _buildSlide3() {
     return Column(
       children: [
         _upButton(1),
@@ -202,12 +393,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(1),
+        _downButton(2),
       ],
     );
   }
 
-  Widget _buildSlide3() {
+  Widget _buildSlide4() {
     return Column(
       children: [
         _upButton(2),
@@ -233,12 +424,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(2),
+        _downButton(3),
       ],
     );
   }
 
-  Widget _buildSlide4() {
+  Widget _buildSlide5() {
     return Column(
       children: [
         _upButton(3),
@@ -264,12 +455,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(3),
+        _downButton(4),
       ],
     );
   }
 
-  Widget _buildSlide5() {
+  Widget _buildSlide6() {
     return Column(
       children: [
         _upButton(4),
@@ -294,12 +485,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(4),
+        _downButton(5),
       ],
     );
   }
 
-  Widget _buildSlide6() {
+  Widget _buildSlide7() {
     return Column(
       children: [
         _upButton(5),
@@ -325,12 +516,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(5),
+        _downButton(6),
       ],
     );
   }
 
-  Widget _buildSlide7() {
+  Widget _buildSlide8() {
     return Column(
       children: [
         _upButton(6),
@@ -355,12 +546,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(6),
+        _downButton(7),
       ],
     );
   }
 
-  Widget _buildSlide8() {
+  Widget _buildSlide9() {
     return Column(
       children: [
         _upButton(7),
@@ -387,12 +578,12 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
             ),
           ),
         ),
-        _downButton(7),
+        _downButton(8),
       ],
     );
   }
 
-  Widget _buildSlide9() {
+  Widget _buildSlide10() {
     return Column(
       children: [
         _upButton(7),
@@ -413,6 +604,79 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
                     texture: '-',
                   ),
                   const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _downButton(9),
+      ],
+    );
+  }
+
+  Widget _buildSlide11() {
+    return Column(
+      children: [
+        _upButton(8),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      'About us',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: gradient2Color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: Text(
+                      'The research team behind Abaca Grade Classifier, empowering abaca farmers with accurate and efficient abaca fiber grades classification.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildImageWithDescription(
+                          'assets/images/10.png',
+                          'c3zar',
+                        ),
+                      ),
+                      SizedBox(width: 10), // Add some space between columns
+                      Expanded(
+                        child: _buildImageWithDescription(
+                          'assets/images/11.png',
+                          'Ryukkn',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                      height:
+                          20), // Add some space between image row and the next row
+                  Center(
+                    child: _buildImageWithDescription(
+                      'assets/images/12.png',
+                      'Cocordz',
+                    ),
+                  ),
+                  SizedBox(height: 20),
                   const Text(
                     'For more info, visit philfida.da.gov or read PNS/BAFS 180:2016.',
                     style: TextStyle(
@@ -434,6 +698,45 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
           ),
         ),
         _backToStartButton(1),
+      ],
+    );
+  }
+
+  Widget _buildImageWithDescription(String imagePath, String description) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(70),
+            child: Image.asset(
+              imagePath,
+              width: 140,
+              height: 140,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        SizedBox(height: 10), // Add some space between image and description
+        Center(
+          child: Container(
+            decoration: BoxDecoration(
+              color: gradient2Color,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            padding: EdgeInsets.all(8.0),
+            constraints:
+                BoxConstraints(minWidth: 120), // Set maximum width to 50
+            child: Text(
+              textAlign: TextAlign.center,
+              description,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white, // Text color is set to white
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -480,7 +783,7 @@ class _AbacaFiberGradesScreenState extends State<AbacaFiberGradesScreen> {
         Icons.arrow_downward,
         color: gradient2Color,
       ),
-      onPressed: currentIndex < 8
+      onPressed: currentIndex < 13
           ? () {
               _pageController.animateToPage(
                 currentIndex + 1,
