@@ -403,7 +403,7 @@ Future<String> uploadImage(File imageFile, String prediction) async {
         return 'B';
       }
 
-      if (laplacianVariance < 2300  ) {
+      if (laplacianVariance < 2700  ) {
         // image does not contain enough strands to increase image sharpness
         return 'NA'; // Not Abaca
       }
